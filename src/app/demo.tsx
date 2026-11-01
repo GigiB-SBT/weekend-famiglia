@@ -16,8 +16,12 @@ import type {
 import { agesLabel, buildDraft } from "@/lib/mail/draft";
 import { buildHtml, KID_COLORS } from "@/lib/mail/html";
 import { fallbackWeather, getWeekendWeather } from "@/lib/weather/open-meteo";
+import candidatesJson from "@/data/event-candidates.json";
+import { eventWhen, loadStore, pendingCandidates, saveStore, type EventStoreData } from "@/lib/events/store";
+import { EventsPanel } from "./events-panel";
 
 const ACTIVITIES = seed as Activity[];
+const CANDIDATES = candidatesJson as Activity[];
 const MAX_CHILDREN = 8;
 const BASE = DEMO_FAMILIES[0];
 
@@ -47,11 +51,20 @@ export function Demo() {
   const [placeholder, setPlaceholder] = useState<WeekendWeather | null>(null);
   const [rainMode, setRainMode] = useState<RainMode>("live");
   const [copied, setCopied] = useState(false);
+  const [tab, setTab] = useState<"weekend" | "eventi">("weekend");
+  const [store, setStore] = useState<EventStoreData>({ events: [], rejected: [] });
+  const [today, setToday] = useState<string>("");
 
   useEffect(() => {
     let alive = true;
     // Date-dependent values are computed only in the browser (no prerender clock).
-    queueMicrotask(() => alive && setPlaceholder(fallbackWeather()));
+    queueMicrotask(() => {
+      if (!alive) return;
+      setPlaceholder(fallbackWeather());
+      setStore(loadStore());
+      const d = new Date();
+      setToday(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
+    });
     getWeekendWeather().then((w) => alive && setLiveWeather(w));
     return () => { alive = false; };
   }, []);
@@ -79,10 +92,17 @@ export function Demo() {
     [ages, zone, radiusKm, budget, preference],
   );
 
+  const catalogue = useMemo(() => [...ACTIVITIES, ...store.events.filter((e) => e.status === "published")], [store]);
+  const pending = useMemo(() => (today ? pendingCandidates(CANDIDATES, store, today) : []), [store, today]);
   const rec = useMemo(
-    () => (weather ? recommend(family, ACTIVITIES, weather, { allowUnverified: true, now: new Date(weather.fetchedAt) }) : null),
-    [family, weather],
+    () => (weather ? recommend(family, catalogue, weather, { allowUnverified: true, now: new Date(weather.fetchedAt) }) : null),
+    [family, weather, catalogue],
   );
+
+  function updateStore(next: EventStoreData) {
+    setStore(next);
+    saveStore(next);
+  }
   const draft = useMemo(() => (rec ? buildDraft(family, rec) : null), [family, rec]);
   const html = useMemo(() => (rec ? buildHtml(family, rec) : ""), [family, rec]);
   const kidColor = useMemo(() => colorByIndex(ages), [ages]);
@@ -105,12 +125,34 @@ export function Demo() {
   return (
     <div className="min-h-full">
       <header className="bg-shell text-on-shell">
-        <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-4 py-4">
+        <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-4 pt-4">
           <h1 className="text-xl font-extrabold">Weekend in Famiglia</h1>
           <WeatherBadge w={weather} live={liveWeather} />
         </div>
+        <nav aria-label="Sezioni" className="mx-auto flex max-w-2xl gap-1 px-4 pb-3 pt-3">
+          {([["weekend", "Weekend"], ["eventi", "Eventi"]] as const).map(([k, l]) => (
+            <button
+              key={k}
+              aria-pressed={tab === k}
+              onClick={() => setTab(k)}
+              className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors duration-150 ${
+                tab === k ? "bg-on-shell text-shell" : "text-on-shell-2 hover:text-on-shell"
+              }`}
+            >
+              {l}
+              {k === "eventi" && pending.length > 0 && (
+                <span className="num rounded-full bg-coral px-1.5 text-xs text-white">{pending.length}</span>
+              )}
+            </button>
+          ))}
+        </nav>
       </header>
 
+      {tab === "eventi" ? (
+        <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6">
+          {today ? <EventsPanel store={store} onStore={updateStore} pending={pending} today={today} /> : <Skeleton />}
+        </main>
+      ) : (
       <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6">
         {/* Children: the one control that matters */}
         <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
@@ -231,6 +273,7 @@ export function Demo() {
           <p>Demo con dati da verificare: orari, prezzi e posizioni vanno controllati prima dell&apos;invio.</p>
         </footer>
       </main>
+      )}
     </div>
   );
 }
@@ -245,8 +288,17 @@ function Idea({ s, n, ages, colors }: { s: ScoredActivity; n: number; ages: numb
         <span className="num flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-display text-base font-extrabold" style={NUM_STYLE[(n - 1) % 3]}>{n}</span>
         <div className="min-w-0">
           <h3 className="text-lg font-extrabold leading-snug">
-            <a href={a.sourceUrl} target="_blank" rel="noreferrer" className="underline-offset-4 hover:underline">{a.title}</a>
+            {a.sourceUrl ? (
+              <a href={a.sourceUrl} target="_blank" rel="noreferrer" className="underline-offset-4 hover:underline">{a.title}</a>
+            ) : (
+              a.title
+            )}
           </h3>
+          {a.event && (
+            <p className="num mt-1 inline-block rounded-full bg-coral px-2.5 py-0.5 text-xs font-semibold text-white">
+              Solo questo weekend · {eventWhen(a)}
+            </p>
+          )}
           <p className="num text-sm text-ink-2">
             {s.distanceKm != null ? km(s.distanceKm) : a.zone} · {COST_LABEL[a.costBand]}
             {a.bookingRequired ? " · su prenotazione" : ""}

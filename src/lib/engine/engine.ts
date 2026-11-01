@@ -13,6 +13,8 @@ import type {
 const ADAPT_MARGIN = 2;
 
 const WEIGHTS = { age: 0.5, weather: 0.3, distance: 0.2 } as const;
+/** Dated events happen only this weekend: they outrank evergreen activities at equal fit. */
+const EVENT_BONUS = 0.12;
 
 const AGE_SCORE: Record<Compatibility, number> = {
   all_children: 1,
@@ -62,12 +64,12 @@ export function weatherScore(a: Activity, w: WeekendWeather): number {
 
 /** True when the activity is usable on the given weekend dates. */
 export function isAvailable(a: Activity, saturday: string | null, sunday: string | null): boolean {
-  if (!a.availableFrom && !a.availableTo) return true;
+  const from = a.event ? a.event.date : a.availableFrom;
+  const to = a.event ? (a.event.endDate ?? a.event.date) : a.availableTo;
+  if (!from && !to) return true;
   const days = [saturday, sunday].filter((d): d is string => Boolean(d));
   if (days.length === 0) return true;
-  return days.some(
-    (d) => (!a.availableFrom || d >= a.availableFrom) && (!a.availableTo || d <= a.availableTo),
-  );
+  return days.some((d) => (!from || d >= from) && (!to || d <= to));
 }
 
 export interface EngineOptions {
@@ -122,6 +124,10 @@ export function scoreActivities(
       WEIGHTS.age * breakdown.age + WEIGHTS.weather * breakdown.weather + WEIGHTS.distance * breakdown.distance;
     if (flags.includes("preferenza_indoor")) score -= 0.05;
     if (family.preference === "outdoor" && a.setting === "indoor" && !weather.rainy) score -= 0.05;
+    if (a.event) {
+      score += EVENT_BONUS;
+      flags.push("evento");
+    }
 
     scored.push({ activity: a, compatibility: compat, distanceKm, score: round(score), breakdown, flags });
   }

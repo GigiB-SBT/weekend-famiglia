@@ -10,11 +10,12 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "seed": "node scripts/seed-from-csv.mjs",
-    "build:mobile": "MOBILE_EXPORT=1 next build"
+    "build:mobile": "MOBILE_EXPORT=1 next build && node scripts/ci-signing.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.0",
     "@capacitor/core": "^8.6.0",
+    "@capacitor/local-notifications": "^8.3.1",
     "@supabase/supabase-js": "^2.118.0",
     "next": "16.4.3",
     "react": "19.3.0",

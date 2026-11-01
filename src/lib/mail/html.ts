@@ -1,5 +1,6 @@
 import type { CostBand, Family, Recommendation, ScoredActivity } from "@/lib/engine/types";
 import { agesLabel, FEEDBACK_QUESTION } from "./draft";
+import { eventWhen } from "@/lib/events/store";
 
 /**
  * HTML version of the Friday email — brand v2 (sky blue, coral, sun yellow).
@@ -76,7 +77,8 @@ function ideaBlock(s: ScoredActivity, i: number, kids: number) {
         <td valign="top" style="padding-right:12px"><div style="width:34px;height:34px;line-height:34px;border-radius:999px;background:${NUM_BG[i % 3]};color:${NUM_FG[i % 3]};text-align:center;font:800 17px ${DISPLAY}">${i + 1}</div></td>
         <td valign="top">
           <div style="font:800 20px/1.2 ${DISPLAY};color:${BRAND.navy};letter-spacing:-0.01em">${escapeHtml(a.title)}</div>
-          <div style="font:400 14px/1.4 ${BODY};color:${BRAND.ink2};padding-top:2px">${escapeHtml(a.zone)}</div>
+          ${a.event ? `<div style="display:inline-block;margin-top:6px;padding:3px 10px;border-radius:999px;background:${BRAND.coral};color:#ffffff;font:700 12px ${BODY}">Solo questo weekend · ${escapeHtml(eventWhen(a))}</div>` : ""}
+          <div style="font:400 14px/1.4 ${BODY};color:${BRAND.ink2};padding-top:4px">${escapeHtml(a.address && a.event ? a.address : a.zone)}</div>
         </td>
       </tr></table>
       <div style="font:400 15px/1.5 ${BODY};color:${BRAND.navy};padding:12px 0 10px">${escapeHtml(a.description)}</div>
@@ -84,7 +86,7 @@ function ideaBlock(s: ScoredActivity, i: number, kids: number) {
         <span style="display:inline-block;margin:0 6px 6px 0;padding:4px 10px;border-radius:999px;background:${BRAND.okBg};color:${BRAND.ok};font:700 13px ${BODY}">${compatLine(s, kids)}</span>
         <span style="display:inline-block;margin:0 6px 6px 0;padding:4px 10px;border-radius:999px;background:#fff3cf;color:${BRAND.navy};font:700 13px ${BODY}">${escapeHtml(meta)}</span>
       </div>
-      <a href="${safeUrl(a.sourceUrl)}" style="display:inline-block;padding:10px 18px;border-radius:999px;background:${BRAND.navy};color:#ffffff;text-decoration:none;font:700 14px ${BODY}">Orari e info →</a>
+      ${a.sourceUrl ? `<a href="${safeUrl(a.sourceUrl)}" style="display:inline-block;padding:10px 18px;border-radius:999px;background:${BRAND.navy};color:#ffffff;text-decoration:none;font:700 14px ${BODY}">Orari e info →</a>` : ""}
     </td></tr>
   </table>
 </td></tr>`;

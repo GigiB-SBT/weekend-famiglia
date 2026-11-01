@@ -1,0 +1,12 @@
+[
+  {
+    "id": "agenda-cultura-bologna",
+    "name": "Agenda Cultura · Comune di Bologna",
+    "type": "opendatasoft",
+    "dataset": "eventi-bologna-agenda-cultura",
+    "bases": ["https://opendata.comune.bologna.it", "https://bologna.opendatasoft.com"],
+    "kidsOnly": false,
+    "license": "CC BY-SA 4.0",
+    "attributionUrl": "https://www.culturabologna.it/objects/agenda"
+  }
+]

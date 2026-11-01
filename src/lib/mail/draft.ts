@@ -1,4 +1,5 @@
 import type { Compatibility, Family, Recommendation, ScoredActivity } from "@/lib/engine/types";
+import { eventWhen } from "@/lib/events/store";
 
 export interface MailDraft {
   to: string;
@@ -32,7 +33,7 @@ function ideaLines(s: ScoredActivity, i: number): string {
   const a = s.activity;
   const dist = s.distanceKm != null ? `${s.distanceKm.toFixed(1)} km` : "distanza da verificare";
   return [
-    `${i}. ${a.title} — ${a.zone}`,
+    `${i}. ${a.title} — ${a.zone}${a.event ? ` · ${eventWhen(a)}` : ""}`,
     `   ${a.description}`,
     `   Età: ${compatLabel(s.compatibility)}. ${a.multiAgeNote}`,
     `   Costo: ${COST_LABEL[a.costBand]}${a.priceNote ? ` (${a.priceNote})` : ""} · ${dist}${a.bookingRequired ? " · prenotare" : ""}`,

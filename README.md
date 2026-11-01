@@ -55,7 +55,17 @@ A ogni push su `main` la GitHub Action `.github/workflows/android-apk.yml` costr
 - Scarica: tab **Actions** → ultima esecuzione di **Android APK** → sezione **Artifacts** → `weekend-famiglia-apk` (zip con `app-debug.apk`).
 - Installa sul telefono aprendo l'APK e consentendo "installa app sconosciute" per il browser o il file manager.
 - In locale: `npm run build:mobile && npx cap add android && npx cap sync android` (serve Android Studio / JDK 21).
+- Firma stabile: `signing/debug.keystore` (chiave di debug del progetto, installata in CI da `scripts/ci-signing.mjs`), così ogni nuovo APK si installa sopra il precedente senza perdere i dati.
 - Icona e splash: `assets/` (generati con `@capacitor/assets` in CI). La cartella `android/` è generata e non va committata.
+
+## Eventi (feste di parrocchia, agende online)
+
+- **Scheda Eventi** nell'app: coda *Da approvare* (eventi trovati online), *In programma*, **+ Aggiungi evento** con lettura del testo di volantini e messaggi WhatsApp (data, ora, tipo, costo, età).
+- Gli eventi approvati entrano nelle proposte del loro weekend con priorità sulle attività fisse e compaiono nella mail come "Solo questo weekend".
+- Gli eventi sono salvati sul telefono (localStorage): usare *Backup eventi* prima di reinstallare. In fase E2 passano su Supabase.
+- **Lettura automatica**: `.github/workflows/eventi-settimanali.yml`, ogni mercoledì. Legge l'open data "Agenda Cultura" del Comune (`scripts/fetch-events.mjs`, fonti in `data/event-sources.json`), salva i candidati in `src/data/event-candidates.json`, apre una issue "N eventi da approvare" (GitHub la invia per email) e ricostruisce l'APK.
+- L'Agenda Cultura esclude sagre ed eventi religiosi: le parrocchie si aggiungono a mano. Censimento fonti in `docs/FONTI_EVENTI.md`.
+- **Promemoria** (solo app Android): mercoledì 18:30 eventi da approvare, venerdì 9:00 rivedi la mail. Si attivano dalla scheda Eventi.
 
 ## Seed del catalogo
 
@@ -93,3 +103,5 @@ RLS: il catalogo è leggibile solo se `published`; `families`, `recommendations`
 | M2-lite | Motore di raccomandazione | Fatto (dati locali) |
 | M3-lite | Meteo (Open-Meteo) | Fatto |
 | M4-lite | Bozza mail del venerdì e invio dopo approvazione | Bozza fatta; invio, log e import CSV famiglie da fare |
+| E1 | Eventi: aggiunta manuale, coda approvazione, lettura agende, promemoria | Fatto |
+| E2 | Eventi su Supabase, notifica immediata | Da fare (serve account Supabase) |

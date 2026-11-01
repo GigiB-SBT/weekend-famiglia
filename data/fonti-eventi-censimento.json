@@ -1,0 +1,200 @@
+[
+  {
+    "id": "opendata-bologna-agenda-cultura",
+    "name": "Open Data Bologna - Eventi Bologna Agenda Cultura (Opendatasoft)",
+    "url": "https://bologna.opendatasoft.com/explore/dataset/eventi-bologna-agenda-cultura/table/",
+    "kind": "opendata",
+    "access": "json_api",
+    "endpoint": null,
+    "kids_filter": "Nessun campo target confermato (schema non renderizzato dal fetch); da filtrare lato script su categorie/tag (es. 'under 16', 'bambini') dopo aver letto lo schema",
+    "notes": "Dataset ufficiale del Comune (Settore Cultura e Promozione della Citta), estratto dalle API ufficiali di Agenda Cultura, aggiornamento giornaliero dichiarato; contatto opendata@comune.bologna.it. Portale su piattaforma Opendatasoft (api-console su bologna.opendatasoft.com/api-console/; mirror opendata.comune.bologna.it). Endpoint record/export NON visto: la pagina non lo mostra. Il pattern standard Opendatasoft (api/explore/v2.1/catalog/datasets/eventi-bologna-agenda-cultura/records e .../exports/json) va solo TESTATO da una macchina con internet, non e' confermato. Licenza non indicata nella pagina (verificare). Fonte migliore per lettura automatica.",
+    "verified": true
+  },
+  {
+    "id": "culturabologna-agenda",
+    "name": "Bologna Cultura - Agenda / Calendario (Comune di Bologna, Agenda Cultura)",
+    "url": "https://www.culturabologna.it/objects/agenda",
+    "kind": "official",
+    "access": "html_only",
+    "endpoint": null,
+    "kids_filter": "Nessun filtro visibile nelle pagine evento; ricerca per categoria/tema/data (secondo Chialab). Tag come 'under 16' presenti su singoli eventi",
+    "notes": "CMS BEdita sviluppato da Chialab; esiste una REST API usata da app/servizi del Comune, ma l'URL pubblico NON e' documentato. Pagine evento /objects/<slug> con meta Dublin Core, Open Graph, licenza dichiarata CC BY-SA 4.0 (rights holder Cultura Bologna), link 'Aggiungi a Google Calendar' ma nessun .ics, nessun RSS, JSON-LD non visibile (fetch rimuove HTML). Contenuti da musei/biblioteche civici, fondazioni e operatori convenzionati. ESCLUDE eventi religiosi, corsi a pagamento, eventi per pubblici specifici (quindi niente parrocchie). Altre URL viste: /objects/calendario-bologna-cultura, /objects/rassegne-festival-stagioni, /objects/search-cultura-bologna. Segnalazioni: cultura@comune.bologna.it.",
+    "verified": true
+  },
+  {
+    "id": "bolognazerodiciotto-calendario",
+    "name": "Bologna Zerodiciotto - Calendario (Comune di Bologna, Dip. Educazione, Istruzione e Nuove Generazioni)",
+    "url": "https://www.bolognazerodiciotto.it/objects/calendario-z18",
+    "kind": "official",
+    "access": "html_only",
+    "endpoint": null,
+    "kids_filter": "Portale interamente dedicato a 0-18 anni; categorie sugli eventi (es. 'under 16', spettacoli, teatro). Filtri per eta' 0-3/3-6 non visti",
+    "notes": "Stessa piattaforma/URL scheme di culturabologna.it (/objects/<slug>), licenza meta CC BY-SA 4.0. Pagina calendario non aperta direttamente: verificata una pagina evento e il menu (Notizie /objects/news-z18, Calendario /objects/calendario-z18, Mappe, Progetti). Nessun RSS/ICS/API visibile, solo link Google Calendar. Molto pertinente per famiglie, ma l'esempio letto era fermo al 28/05/2025: verificare freschezza del calendario.",
+    "verified": true
+  },
+  {
+    "id": "bolognaestate",
+    "name": "Bologna Estate (rassegna estiva, Comune di Bologna)",
+    "url": "https://www.bolognaestate.it/",
+    "kind": "official",
+    "access": "html_only",
+    "endpoint": null,
+    "kids_filter": "Filtri per data (oggi/domani/weekend), Comune e Quartiere (incl. 'Borgo Panigale / Reno'); categoria 'under 16' su alcuni eventi",
+    "notes": "Stessa piattaforma BEdita/Chialab di culturabologna.it, licenza meta CC BY-SA 4.0. Utile soprattutto in stagione estiva (giugno-settembre); fuori stagione poco utile. Nessun feed/API/ICS/JSON-LD visibili. Filtro per quartiere interessante per l'area Borgo Panigale-Reno ma i parametri URL non sono visibili.",
+    "verified": true
+  },
+  {
+    "id": "salaborsa-biblioteca",
+    "name": "Biblioteca Salaborsa - Calendario eventi (e Salaborsa Ragazzi)",
+    "url": "https://www.bibliotecasalaborsa.it/lang/en/objects/calendario_eventi",
+    "kind": "official",
+    "access": "html_only",
+    "endpoint": null,
+    "kids_filter": "Sito dedicato https://www.bibliotecasalaborsa.it/ragazzi/ ; nessun filtro bambini/famiglie visibile nelle pagine evento",
+    "notes": "Stessa piattaforma BEdita/Chialab; le pagine evento hanno URL canonico su culturabologna.it (/objects/<slug>), licenza CC BY-SA 4.0. Verificata una pagina evento (non la pagina calendario). Nessun API/RSS/ICS/JSON-LD visibili, solo link Google Calendar. Probabilmente gli stessi eventi finiscono nell'Agenda Cultura (dataset open data): leggere da li' evita lo scraping.",
+    "verified": true
+  },
+  {
+    "id": "bibliotechebologna",
+    "name": "Biblioteche di Bologna (bibliotechebologna.it)",
+    "url": "https://www.bibliotechebologna.it/eventi",
+    "kind": "official",
+    "access": "html_only",
+    "endpoint": null,
+    "kids_filter": null,
+    "notes": "NON verificato: il fetch diretto e' stato bloccato. Da una ricerca risulta una news su bibliotechebologna.it che rimanda all'app Agenda Cultura, segno che gli eventi delle biblioteche confluiscono in Agenda Cultura. Da controllare con curl da macchina con internet (RSS, JSON-LD).",
+    "verified": false
+  },
+  {
+    "id": "bolognawelcome-eventi",
+    "name": "Bologna Welcome - Eventi a Bologna e dintorni",
+    "url": "https://www.bolognawelcome.com/it/eventi",
+    "kind": "official",
+    "access": "html_only",
+    "endpoint": null,
+    "kids_filter": "Nessun filtro bambini/famiglie visibile; categorie: Cinema e teatro, Visite guidate, Natura & Trekking, Cartellone/Festival, Varie, Mostre. Esistono 'Family Tour' come esperienze (/it/esperienze/<id>/<slug>)",
+    "notes": "Front end Angular: la pagina elenco, letta senza JS, risulta vuota ('Nessun risultato') quindi lo scraping richiede un browser headless o l'API interna (non vista). Pagine dettaglio /it/eventi/<categoria>/<slug> sono statiche con meta Open Graph; nessun JSON-LD, RSS, ICS visibile. Molte pagine evento sono vecchie (2018): dati stantii mescolati ai nuovi. Footer cita 'Uso dell'intelligenza artificiale' e Condizioni di Utilizzo (testo non letto). Sconsigliata come fonte automatica.",
+    "verified": true
+  },
+  {
+    "id": "testoni-ragazzi",
+    "name": "Teatro Testoni Ragazzi (La Baracca)",
+    "url": "https://www.testoniragazzi.it",
+    "kind": "venue",
+    "access": "html_only",
+    "endpoint": null,
+    "kids_filter": "Teatro interamente per ragazzi e famiglie; eta' consigliata indicata per spettacolo",
+    "notes": "Sito NON verificato (fetch bloccato). La stagione e' pero' pubblicata anche su bolognazerodiciotto.it/bolognaestate.it come evento-contenitore con circa 50 repliche con data/ora (verificato). Vecchia scheda su Bologna Welcome riporta eta' (1-4 anni), prezzi e contatti. Per l'automazione conviene passare dall'Agenda Cultura/open data.",
+    "verified": false
+  },
+  {
+    "id": "cineteca-schermi-e-lavagne",
+    "name": "Cineteca di Bologna - Schermi e Lavagne",
+    "url": "https://cinetecadibologna.it/schermi-e-lavagne/",
+    "kind": "venue",
+    "access": "html_only",
+    "endpoint": null,
+    "kids_filter": "Rassegna per bambini/ragazzi e scuole",
+    "notes": "NON verificato (fetch bloccato). Dai risultati di ricerca: sito WordPress multisite (/schermi-e-lavagne/wp-content/uploads/sites/4/...) e programma mensile pubblicato come PDF 'Libretto-<Mese>_<anno>_web.pdf' (visti dicembre 2025 e marzo 2026). Quindi probabile solo PDF mensile: richiede estrazione testo da PDF. wp-json non testato.",
+    "verified": false
+  },
+  {
+    "id": "pinacoteca-nazionale-famiglie",
+    "name": "Pinacoteca Nazionale di Bologna - Attivita' per famiglie",
+    "url": "https://pinacotecabologna.cultura.gov.it/en/servizi-educativi/attivita-per-famiglie",
+    "kind": "venue",
+    "access": "html_only",
+    "endpoint": null,
+    "kids_filter": "Pagina dedicata alle famiglie; elenco 'Attivita' per famiglie 2026/2027' linkato; attivita' gratuite per bambini e accompagnatore, prenotazione via email",
+    "notes": "Sito WordPress (metadati e URL ?post_type=event&p=...). La pagina non riporta date: rimanda a un elenco separato. Nessun feed/ICS/JSON-LD visibile nell'estratto. /wp-json/ non testato (non visto, non garantito). Appuntamenti mensili: controllo manuale o scraping leggero.",
+    "verified": true
+  },
+  {
+    "id": "musei-civici-bologna",
+    "name": "Musei Civici Bologna / Istituzione Bologna Musei (museibologna.it)",
+    "url": "https://www.museibologna.it/eventi",
+    "kind": "official",
+    "access": "html_only",
+    "endpoint": null,
+    "kids_filter": null,
+    "notes": "NON verificato: fetch diretto bloccato e nessun risultato di ricerca ha restituito pagine di museibologna.it. Le attivita' famiglia dei musei civici (es. Burattini a Palazzo Pepoli, Family Tour) compaiono in Agenda Cultura (musei civici sono fonte dichiarata) e come esperienze su Bologna Welcome.",
+    "verified": false
+  },
+  {
+    "id": "fondazione-golinelli",
+    "name": "Fondazione Golinelli / Opificio Golinelli",
+    "url": "https://www.fondazionegolinelli.it",
+    "kind": "venue",
+    "access": "html_only",
+    "endpoint": null,
+    "kids_filter": "Attivita' per bambini, ragazzi e famiglie (Missione Scienza, Opus Mundi)",
+    "notes": "NON verificato (fetch bloccato). Dalle ricerche: il sito usa /app/uploads/... (probabile WordPress/Bedrock) e pubblica molti comunicati in PDF. Le attivita' famiglia compaiono anche in Agenda Cultura (es. locandina Missione Scienza su assets.culturabologna.it). Da testare con curl: wp-json, feed.",
+    "verified": false
+  },
+  {
+    "id": "citta-metropolitana-musei",
+    "name": "Citta' metropolitana di Bologna - Musei, appuntamenti in citta' metropolitana",
+    "url": "https://www.cittametropolitana.bo.it/cultura/Home/001/Musei36",
+    "kind": "official",
+    "access": "html_only",
+    "endpoint": null,
+    "kids_filter": null,
+    "notes": "NON verificato: il fetch ha dato errore del sito. Copre l'area metropolitana (dintorni di Bologna), da riprovare.",
+    "verified": false
+  },
+  {
+    "id": "quartieri-bologna",
+    "name": "Quartieri di Bologna (es. Borgo Panigale-Reno) - pagine eventi",
+    "url": "https://www.comune.bologna.it/quartieri/borgo-panigale-reno",
+    "kind": "official",
+    "access": "html_only",
+    "endpoint": null,
+    "kids_filter": null,
+    "notes": "URL indicativo, NON verificato (comune.bologna.it non raggiungibile dal fetch e nessun risultato di ricerca utile). Il filtro per Quartiere esiste invece su bolognaestate.it (voce 'Borgo Panigale / Reno'). Le feste di quartiere compaiono anche su aggregatori generici (es. eventiesagre.it) di cui non e' stata verificata la struttura.",
+    "verified": false
+  },
+  {
+    "id": "chiesadibologna",
+    "name": "Chiesa di Bologna (Arcidiocesi) - agenda",
+    "url": "https://www.chiesadibologna.it",
+    "kind": "parish",
+    "access": "none_online",
+    "endpoint": null,
+    "kids_filter": null,
+    "notes": "NON verificato: nessuna pagina raggiunta ne' restituita dalle ricerche. Non classificabile con certezza: marcato none_online solo come segnaposto prudenziale, da controllare a mano.",
+    "verified": false
+  },
+  {
+    "id": "parrocchia-castel-debole",
+    "name": "Parrocchia di Castel Debole (parrocchiacasteldebole.it)",
+    "url": "https://parrocchiacasteldebole.it/",
+    "kind": "parish",
+    "access": "html_only",
+    "endpoint": null,
+    "kids_filter": null,
+    "notes": "NON aperto (fetch bloccato). Unico sito parrocchiale dell'area Borgo Panigale emerso dalla ricerca; dal path di un allegato (/component/attachments/download/173.html) sembra Joomla con componente allegati, quindi gli avvisi sarebbero probabilmente PDF/allegati. Nessuna conferma di calendario eventi strutturato, ne' di RSS (Joomla di solito offre /?format=feed&type=rss, ma NON visto). Ricerche per altre parrocchie di Borgo Panigale / Santa Viola non hanno prodotto siti utili.",
+    "verified": false
+  },
+  {
+    "id": "familygo-bologna",
+    "name": "FamilyGO - Bologna eventi per bambini: cosa fare nei weekend",
+    "url": "https://www.familygo.eu/vacanze-con-bambini/eventi/bologna/eventi_bambini_bologna/",
+    "kind": "aggregator",
+    "access": "html_only",
+    "endpoint": null,
+    "kids_filter": "Intera pagina dedicata a bambini/famiglie",
+    "notes": "Solo come pista. Articolo editoriale in prosa raggruppato per sezioni (Halloween, musei, spettacoli...), con data in grassetto, luogo, eta' e contatto; aggiornato di recente (pubblicato/modificato 30/10/2026). Nessun RSS/ICS/JSON-LD visibili. Footer: 'Vietata la riproduzione, anche parziale, senza autorizzazione': NON copiare testi. Rimanda a culturabologna.it/agenda e al sito Luna Farm come fonti primarie.",
+    "verified": true
+  },
+  {
+    "id": "viaggiapiccoli-bologna",
+    "name": "Viaggiapiccoli - eventi per bambini a Bologna e in Emilia-Romagna (serie settimanale/mensile)",
+    "url": "https://www.viaggiapiccoli.com/teatro-bambini-bologna/",
+    "kind": "aggregator",
+    "access": "html_only",
+    "endpoint": null,
+    "kids_filter": "Sito interamente per famiglie",
+    "notes": "Solo come pista. Articoli editoriali WordPress (probabile: /wp-content/uploads, Site Kit), non un elenco eventi; serie periodiche tipo '10 eventi per bambini a Bologna e in Emilia Romagna ...'. Modificato 04/02/2026 per la pagina teatro. RSS e JSON-LD non verificabili dal fetch. Nessuna dicitura anti-copia letta nel footer ma sono contenuti editoriali coperti da diritto d'autore.",
+    "verified": true
+  }
+]

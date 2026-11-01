@@ -6,7 +6,9 @@ export type Category =
   | "laboratorio"
   | "scienza"
   | "biblioteca"
-  | "gita";
+  | "gita"
+  | "festa"
+  | "spettacolo";
 
 export type Setting = "indoor" | "outdoor" | "mixed";
 export type WeatherFit = "any" | "dry_only" | "rain_ok";
@@ -38,6 +40,23 @@ export interface Activity {
   /** Optional validity window (ISO dates) — used by dated events. */
   availableFrom?: string | null;
   availableTo?: string | null;
+  /** Present only for dated events (castagnata, spettacolo, laboratorio in biblioteca…). */
+  event?: EventInfo | null;
+}
+
+export interface EventInfo {
+  /** ISO date YYYY-MM-DD (first day). */
+  date: string;
+  /** ISO date of the last day, for multi-day events. */
+  endDate?: string | null;
+  /** "HH:MM", local time. */
+  startTime?: string | null;
+  endTime?: string | null;
+  organizer?: string | null;
+  /** Where it came from: automatic agenda reading, or added by hand (flyer, WhatsApp…). */
+  origin: "agenda" | "manuale";
+  /** Approximate position (zone centroid) instead of the exact address. */
+  approxPosition?: boolean;
 }
 
 export type FamilyBudget = "free" | "upto20" | "20to50" | "over50";
