@@ -4,9 +4,262 @@
     "name": "Agenda Cultura · Comune di Bologna",
     "type": "opendatasoft",
     "dataset": "eventi-bologna-agenda-cultura",
-    "bases": ["https://opendata.comune.bologna.it", "https://bologna.opendatasoft.com"],
+    "bases": [
+      "https://opendata.comune.bologna.it",
+      "https://bologna.opendatasoft.com"
+    ],
     "kidsOnly": false,
     "license": "CC BY-SA 4.0",
     "attributionUrl": "https://www.culturabologna.it/objects/agenda"
+  },
+  {
+    "id": "parrocchia-casteldebole",
+    "name": "Parrocchia di Casteldebole (SS. Giovanni Battista e Gemma Galgani)",
+    "type": "page",
+    "url": "https://www.parrocchiacasteldebole.it/",
+    "zone": "Borgo Panigale-Reno",
+    "lat": 44.497,
+    "lng": 11.283,
+    "address": "Parrocchia di Casteldebole, Bologna",
+    "maxPdfs": 0
+  },
+  {
+    "id": "parrocchia-casteldebole-foglietti",
+    "name": "Parrocchia di Casteldebole · foglietti domenicali",
+    "type": "page",
+    "url": "https://www.parrocchiacasteldebole.it/volantini.html",
+    "zone": "Borgo Panigale-Reno",
+    "lat": 44.497,
+    "lng": 11.283,
+    "address": "Parrocchia di Casteldebole, Bologna",
+    "maxPdfs": 2,
+    "pdfPattern": "foglietto|domenical"
+  },
+  {
+    "id": "zp-borgo-panigale-news",
+    "name": "Zona pastorale Borgo Panigale e Lungo Reno",
+    "type": "page",
+    "url": "https://zpborgopanigalelungoreno.chiesadibologna.it/category/news/",
+    "followLinks": "^https://zpborgopanigalelungoreno\\\\.chiesadibologna\\\\.it/(?!category|tag|page|wp-|feed|author|newsletter|parrocchia-)[a-z0-9-]+/$",
+    "zone": "Borgo Panigale-Reno",
+    "lat": 44.512,
+    "lng": 11.27,
+    "address": "Borgo Panigale, Bologna"
+  },
+  {
+    "id": "zp-barca-news",
+    "name": "Zona pastorale Barca (B.V. Immacolata, S. Andrea, Cristo Re)",
+    "type": "page",
+    "url": "https://zpbarca.chiesadibologna.it/category/news/",
+    "followLinks": "^https://zpbarca\\\\.chiesadibologna\\\\.it/(?!category|tag|page|wp-|feed|author|newsletter|parrocchia-)[a-z0-9-]+/$",
+    "zone": "Borgo Panigale-Reno",
+    "lat": 44.488,
+    "lng": 11.3,
+    "address": "Barca, Bologna"
+  },
+  {
+    "id": "zp-barca-newsletter",
+    "name": "Zona pastorale Barca · newsletter",
+    "type": "page",
+    "url": "https://zpbarca.chiesadibologna.it/newsletter/",
+    "zone": "Borgo Panigale-Reno",
+    "lat": 44.488,
+    "lng": 11.3,
+    "address": "Barca, Bologna"
+  },
+  {
+    "id": "zp-bertalia-news",
+    "name": "S. Martino di Bertalia",
+    "type": "page",
+    "url": "https://zpbologninabeverarabertalia.chiesadibologna.it/category/news/parrocchia-di-s-martino-di-bertalia/",
+    "followLinks": "^https://zpbologninabeverarabertalia\\\\.chiesadibologna\\\\.it/(?!category|tag|page|wp-|feed|author|newsletter|parrocchia-)[a-z0-9-]+/$",
+    "zone": "Navile",
+    "lat": 44.518,
+    "lng": 11.32,
+    "address": "Bertalia, Bologna"
+  },
+  {
+    "id": "zp-bolognina-news",
+    "name": "Zona pastorale Bolognina-Beverara-Bertalia",
+    "type": "page",
+    "url": "https://zpbologninabeverarabertalia.chiesadibologna.it/category/news/",
+    "followLinks": "^https://zpbologninabeverarabertalia\\\\.chiesadibologna\\\\.it/(?!category|tag|page|wp-|feed|author|newsletter|parrocchia-)[a-z0-9-]+/$",
+    "zone": "Navile",
+    "lat": 44.512,
+    "lng": 11.335,
+    "address": "Bolognina, Bologna"
+  },
+  {
+    "id": "zp-meloncello-news",
+    "name": "Zona pastorale Meloncello-Funivia (anche S. Croce Casalecchio)",
+    "type": "page",
+    "url": "https://zpmeloncellofunivia.chiesadibologna.it/category/news/",
+    "followLinks": "^https://zpmeloncellofunivia\\\\.chiesadibologna\\\\.it/(?!category|tag|page|wp-|feed|author|newsletter|parrocchia-)[a-z0-9-]+/$",
+    "zone": "Porto-Saragozza",
+    "lat": 44.483,
+    "lng": 11.307,
+    "address": "Meloncello / Casalecchio"
+  },
+  {
+    "id": "zp-saffi-ravone-news",
+    "name": "Zona pastorale Saffi-Ravone",
+    "type": "page",
+    "url": "https://zpsaffiravone.chiesadibologna.it/category/news/",
+    "followLinks": "^https://zpsaffiravone\\\\.chiesadibologna\\\\.it/(?!category|tag|page|wp-|feed|author|newsletter|parrocchia-)[a-z0-9-]+/$",
+    "zone": "Porto-Saragozza",
+    "lat": 44.5,
+    "lng": 11.315,
+    "address": "Saffi-Ravone, Bologna"
+  },
+  {
+    "id": "upcm-castel-maggiore",
+    "name": "Unità pastorale Castel Maggiore (S. Andrea, Sabbiuno, Bondanello)",
+    "type": "page",
+    "url": "https://www.upcm.it/index.html",
+    "maxPdfs": 1,
+    "pdfPattern": "newsletter|foglio|avvis",
+    "zone": "Navile",
+    "lat": 44.577,
+    "lng": 11.36,
+    "address": "Castel Maggiore"
+  },
+  {
+    "id": "parrocchia-trebbo",
+    "name": "Parrocchia di Trebbo di Reno",
+    "type": "page",
+    "url": "https://parrocchiatrebbo.it/blog/",
+    "followLinks": "^https://parrocchiatrebbo\\.it/(?!blog|category|tag|page|wp-|feed|author)[a-z0-9-]+/$",
+    "zone": "Navile",
+    "lat": 44.556,
+    "lng": 11.325,
+    "address": "Trebbo di Reno, Castel Maggiore"
+  },
+  {
+    "id": "zp-argelato",
+    "name": "Parrocchia S. Michele · Argelato",
+    "type": "page",
+    "url": "https://zpsangiorgioargelatobentivoglio.chiesadibologna.it/category/news/news-zona/",
+    "followLinks": "^https://zpsangiorgioargelatobentivoglio\\.chiesadibologna\\.it/avvisi[a-z0-9-]*/$",
+    "maxLinks": 2,
+    "zone": "Navile",
+    "lat": 44.642,
+    "lng": 11.348,
+    "address": "Argelato"
+  },
+  {
+    "id": "parrocchia-calderara",
+    "name": "Parrocchia S. Maria · Calderara di Reno",
+    "type": "page",
+    "url": "https://www.parrocchiacalderara.it/",
+    "zone": "Navile",
+    "lat": 44.565,
+    "lng": 11.272,
+    "address": "Calderara di Reno"
+  },
+  {
+    "id": "parrocchia-casalecchio-sgb",
+    "name": "Parrocchie di Casalecchio (S. Giovanni Battista, S. Martino)",
+    "type": "page",
+    "url": "https://parrocchiasgbcasalecchio.altervista.org/",
+    "zone": "Porto-Saragozza",
+    "lat": 44.476,
+    "lng": 11.276,
+    "address": "Casalecchio di Reno"
+  },
+  {
+    "id": "parrocchia-zola",
+    "name": "Parrocchia SS. Nicolò e Agata · Zola Predosa",
+    "type": "page",
+    "url": "https://www.parrocchiadizola.org/",
+    "zone": "Borgo Panigale-Reno",
+    "lat": 44.49,
+    "lng": 11.218,
+    "address": "Zola Predosa"
+  },
+  {
+    "id": "parrocchia-corpus-domini",
+    "name": "Parrocchia Corpus Domini · Bologna",
+    "type": "page",
+    "url": "https://www.parrocchiacorpusdominibo.it/categoria.php?slug=foglio-settimanale",
+    "zone": "Savena",
+    "lat": 44.483,
+    "lng": 11.37,
+    "address": "Viale Enriques, Bologna"
+  },
+  {
+    "id": "parrocchia-anzola-avvisi",
+    "name": "Parrocchia SS. Pietro e Paolo · Anzola",
+    "type": "page",
+    "url": "https://parrocchiaanzola.it/avvisi-della-settimana/",
+    "zone": "Borgo Panigale-Reno",
+    "lat": 44.547,
+    "lng": 11.196,
+    "address": "Parrocchia di Anzola dell'Emilia"
+  },
+  {
+    "id": "parrocchia-anzola-eventi",
+    "name": "Parrocchia SS. Pietro e Paolo · Anzola (eventi)",
+    "type": "page",
+    "url": "https://parrocchiaanzola.it/category/eventi/",
+    "zone": "Borgo Panigale-Reno",
+    "lat": 44.547,
+    "lng": 11.196,
+    "address": "Parrocchia di Anzola dell'Emilia"
+  },
+  {
+    "id": "proloco-casalecchio",
+    "name": "Casalecchio Insieme Pro Loco",
+    "type": "page",
+    "url": "https://www.casalecchioinsiemeproloco.org/",
+    "zone": "Porto-Saragozza",
+    "lat": 44.476,
+    "lng": 11.276,
+    "address": "Casalecchio di Reno"
+  },
+  {
+    "id": "proloco-castel-maggiore",
+    "name": "Pro Loco Castel Maggiore",
+    "type": "page",
+    "url": "https://prolococastelmaggiore.com/",
+    "zone": "Navile",
+    "lat": 44.577,
+    "lng": 11.36,
+    "address": "Castel Maggiore"
+  },
+  {
+    "id": "culturara-calderara",
+    "name": "Culturara · Calderara di Reno",
+    "type": "page",
+    "url": "https://www.culturara.it/",
+    "zone": "Navile",
+    "lat": 44.565,
+    "lng": 11.272,
+    "address": "Calderara di Reno"
+  },
+  {
+    "id": "comune-zola-predosa",
+    "name": "Comune di Zola Predosa",
+    "type": "page",
+    "url": "https://comune.zolapredosa.bo.it/",
+    "zone": "Borgo Panigale-Reno",
+    "lat": 44.49,
+    "lng": 11.218,
+    "address": "Zola Predosa"
+  },
+  {
+    "id": "turismo-pianura",
+    "name": "Turismo in Pianura · Città metropolitana",
+    "type": "page",
+    "url": "https://turismoinpianura.cittametropolitana.bo.it/it/eventi-all",
+    "zone": "Navile",
+    "address": "Pianura bolognese (luogo da verificare)"
+  },
+  {
+    "id": "appennino-bolognese",
+    "name": "Appennino Bolognese · Città metropolitana",
+    "type": "page",
+    "url": "https://appenninobolognese.cittametropolitana.bo.it/it/eventi-all",
+    "zone": "Savena",
+    "address": "Appennino bolognese (luogo da verificare)"
   }
 ]

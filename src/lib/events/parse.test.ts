@@ -45,6 +45,11 @@ describe("parseFlyer", () => {
     expect(g.setting).toBe("outdoor");
     expect(g.minAge).toBe(0);
   });
+  it("reads 'dai 2 ai 5 anni'", () => {
+    const g = parseFlyer("Toc toc: spettacolo per bambini dai 2 ai 5 anni", ref);
+    expect([g.minAge, g.maxAge]).toEqual([2, 5]);
+    expect(parseFlyer("da 6 a 10 anni", ref).maxAge).toBe(10);
+  });
   it("reads ages, price and link", () => {
     const g = parseFlyer("Laboratorio di Natale 6-10 anni, sabato 12 dicembre ore 10, 8 € https://example.org/lab.", ref);
     expect(g.category).toBe("laboratorio");

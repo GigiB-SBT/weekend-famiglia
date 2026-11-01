@@ -64,7 +64,9 @@ A ogni push su `main` la GitHub Action `.github/workflows/android-apk.yml` costr
 - Gli eventi approvati entrano nelle proposte del loro weekend con priorità sulle attività fisse e compaiono nella mail come "Solo questo weekend".
 - Gli eventi sono salvati sul telefono (localStorage): usare *Backup eventi* prima di reinstallare. In fase E2 passano su Supabase.
 - **Lettura automatica**: `.github/workflows/eventi-settimanali.yml`, ogni mercoledì. Legge l'open data "Agenda Cultura" del Comune (`scripts/fetch-events.mjs`, fonti in `data/event-sources.json`), salva i candidati in `src/data/event-candidates.json`, apre una issue "N eventi da approvare" (GitHub la invia per email) e ricostruisce l'APK.
-- L'Agenda Cultura esclude sagre ed eventi religiosi: le parrocchie si aggiungono a mano. Censimento fonti in `docs/FONTI_EVENTI.md`.
+- L'Agenda Cultura esclude sagre ed eventi religiosi. Per questo lo script controlla anche **fonti locali** (`type: "page"` in `data/event-sources.json`): siti di parrocchie (anche i PDF degli avvisi), Pro Loco, Comuni limitrofi. Cerca castagnate, feste, sagre, tombole, mercatini e spettacoli con una data (`scripts/lib/local-pages.mjs`). La mail settimanale mostra quali fonti hanno risposto.
+- **Aggiungere una fonte**: su GitHub apri `data/event-sources.json`, matita, copia un blocco `"type": "page"` e cambia `id`, `name`, `url`, `lat`/`lng`. Censimenti in `docs/FONTI_EVENTI.md`, `docs/FONTI_LOCALI.md` e `data/parrocchie-zona-censimento.json`. Per i siti delle zone pastorali (`*.chiesadibologna.it`) lo script apre anche gli ultimi articoli (`followLinks`).
+- Feste solo su volantini, WhatsApp o Facebook: **+ Aggiungi evento** nell'app.
 - **Promemoria** (solo app Android): mercoledì 18:30 eventi da approvare, venerdì 9:00 rivedi la mail. Si attivano dalla scheda Eventi.
 
 ## Seed del catalogo

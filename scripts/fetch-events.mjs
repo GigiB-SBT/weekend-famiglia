@@ -5,8 +5,9 @@
 // The Agenda excludes sagre and religious events: parishes are added by hand in the app.
 import { readFileSync, writeFileSync, appendFileSync } from "node:fs";
 import { parseFlyer } from "../src/lib/events/parse.ts";
+import { extractEvents, fetchText, findPdfLinks, htmlToText, pdfToText } from "./lib/local-pages.mjs";
 
-const SOURCES = JSON.parse(readFileSync(new URL("../data/event-sources.json", import.meta.url), "utf8"));
+const SOURCES = JSON.parse(readFileSync(process.env.EVENTS_SOURCES ?? new URL("../data/event-sources.json", import.meta.url), "utf8"));
 const ZONES = {
   "Borgo Panigale-Reno": [44.505, 11.29],
   Navile: [44.518, 11.342],
@@ -19,10 +20,14 @@ const WINDOW_DAYS = 16;
 const MAX_CANDIDATES = 80;
 // Explicit signals that an event is FOR children (generic words like "laboratorio" or "ragazzi" alone are not enough).
 const KIDS = /bambin|per (?:i )?ragazz|ragazze e ragazzi|bimb|famigli|piccol[ie]|infanzia|0-18|zerodiciotto|under\s?1[0-6]|\bkids\b|letture animate|lettura animata|burattin|marionett|teatro ragazzi|teatro per ragazzi|nati per leggere|nati per la musica|\b(?:dai|da|dagli)\s?\d{1,2}\s?(?:ai|a)\s?\d{1,2}\s?anni|\bdai\s?\d{1,2}\s?anni|\b\d{1,2}\s?[-–]\s?\d{1,2}\s?anni|scuol[ae] (?:dell'infanzia|primari)/i;
+// Events ABOUT children (talks, conferences) are not FOR children unless they say so explicitly.
+const TALK = /convegn|conferenz|seminari|tavola rotonda|presentazione del (?:libro|volume)|incontro pubblico|dibattito|webinar|giornata di studi|formazione per (?:insegnanti|educatori|docenti)/i;
+const STRONG_KIDS = /per (?:i )?bambin|per (?:le )?famigli|per (?:i )?ragazz|per (?:i )?piccol|\b(?:dai|da)\s?\d{1,2}\s?(?:ai|a)?\s?\d{0,2}\s?anni|\b\d{1,2}\s?[-–]\s?\d{1,2}\s?anni|letture animate|lettura animata|burattin|teatro ragazzi/i;
 // Signals of adult-only content that win over a weak kids match.
 const ADULTS = /vietato ai minori|\+18|solo adulti|per adulti|\bover\s?18/i;
 
 const report = [];
+const sourceStatus = []; // { name, ok, n }
 const log = (s) => { console.log(s); report.push(s); };
 
 const today = new Date();
@@ -113,6 +118,7 @@ function toCandidate(rec, source) {
   const free = asText(pick(rec, [/ingresso|prezzo|costo|price|biglietto|ticket/i])?.value);
   const text = `${asText(title.value)}\n${desc}\n${cats}\n${free}`;
   if (!source.kidsOnly && (!KIDS.test(text) || ADULTS.test(text))) return { skip: "non per bambini" };
+  if (!source.kidsOnly && TALK.test(text) && !STRONG_KIDS.test(text)) return { skip: "incontro sui bambini, non per bambini" };
 
   const g = parseFlyer(text, today);
   const pos = geo(rec);
@@ -183,8 +189,96 @@ async function readOpendatasoft(source) {
   return [];
 }
 
+/** Parish pages, weekly bulletins (PDF), comune / Pro Loco pages without structured data. */
+async function readPage(source) {
+  const out = [];
+  let texts = [];
+  try {
+    const page = await fetchText(source.url);
+    if (page.kind === "pdf") {
+      texts.push({ url: source.url, text: await pdfToText(page.buffer) });
+    } else {
+      texts.push({ url: source.url, text: htmlToText(page.text) });
+      // News/category pages show only excerpts: open the latest posts too.
+      if (source.followLinks) {
+        const re = new RegExp(source.followLinks, "i");
+        const links = [...page.text.matchAll(/<a\b[^>]*href=["']([^"'#]+)["']/gi)]
+          .map((m) => { try { return new URL(m[1], source.url).href; } catch { return null; } })
+          .filter((u) => u && re.test(u) && u !== source.url);
+        for (const postUrl of [...new Set(links)].slice(0, source.maxLinks ?? 5)) {
+          try {
+            const post = await fetchText(postUrl);
+            if (post.kind === "html") texts.push({ url: postUrl, text: htmlToText(post.text) });
+          } catch (e) {
+            log(`  ${source.name}: articolo non letto (${e.message})`);
+          }
+        }
+      }
+      for (const pdfUrl of findPdfLinks(page.text, source.url, source.pdfPattern).slice(0, source.maxPdfs ?? 2)) {
+        try {
+          const pdf = await fetchText(pdfUrl);
+          const text = pdf.kind === "pdf" ? await pdfToText(pdf.buffer) : htmlToText(pdf.text);
+          texts.push({ url: pdfUrl, text });
+        } catch (e) {
+          log(`  ${source.name}: PDF non letto (${e.message})`);
+        }
+      }
+    }
+  } catch (e) {
+    log(`- ${source.name}: non raggiungibile (${e.message})`);
+    sourceStatus.push({ name: source.name, ok: false, n: 0 });
+    return out;
+  }
+  let n = 0;
+  for (const { url, text } of texts) {
+    for (const ev of extractEvents(text, { ref: today, from, to })) {
+      const z = ZONES[source.zone] ? source.zone : "Borgo Panigale-Reno";
+      const [lat, lng] = source.lat != null ? [source.lat, source.lng] : ZONES[z];
+      const g = ev.guess;
+      n++;
+      out.push({
+        slug: `loc-${ev.date}-${slugify(`${source.id}-${ev.title}`)}`,
+        title: ev.title,
+        category: g.category ?? "festa",
+        description: ev.text,
+        minAge: g.minAge ?? 0,
+        maxAge: g.maxAge ?? 17,
+        multiAgeNote: "",
+        setting: g.setting ?? "mixed",
+        weatherFit: g.setting === "indoor" ? "rain_ok" : g.setting === "outdoor" ? "dry_only" : "any",
+        costBand: g.costBand ?? "free",
+        priceNote: g.costBand ? "" : "costo da verificare",
+        durationMin: null,
+        bookingRequired: null,
+        address: source.address ?? source.name,
+        zone: z,
+        lat, lng,
+        openingNote: ev.explicitDate ? "" : "data dedotta dal giorno della settimana: verificare",
+        sourceUrl: url,
+        status: "da_verificare",
+        isDemo: false,
+        event: {
+          date: ev.date,
+          endDate: null,
+          startTime: ev.startTime,
+          endTime: ev.endTime,
+          organizer: source.name,
+          origin: "agenda",
+          approxPosition: source.lat == null,
+        },
+      });
+    }
+  }
+  log(`- ${source.name}: ${texts.length} documenti letti, ${n} eventi trovati`);
+  sourceStatus.push({ name: source.name, ok: true, n });
+  return out;
+}
+
 const all = [];
 const skipped = {};
+for (const source of SOURCES.filter((s) => s.type === "page" && s.enabled !== false)) {
+  all.push(...(await readPage(source)));
+}
 for (const source of SOURCES) {
   if (source.type !== "opendatasoft") continue;
   const rows = await readOpendatasoft(source);
@@ -212,7 +306,10 @@ const lines = [
   "",
   ...candidates.slice(0, 40).map((c) => `- **${c.event.date}${c.event.startTime ? ` ${c.event.startTime}` : ""}** · ${c.title} · ${c.address || c.zone}${c.sourceUrl ? ` · [fonte](${c.sourceUrl})` : ""}`),
   "",
-  "Ricorda le feste di parrocchia e di quartiere: non sono nelle agende online, aggiungile con **+ Aggiungi evento**.",
+  "## Fonti locali controllate",
+  ...sourceStatus.map((x) => `- ${x.ok ? "✅" : "⚠️"} ${x.name}: ${x.ok ? `${x.n} eventi` : "non raggiungibile"}`),
+  "",
+  "Le feste che non sono online (volantini, WhatsApp, Facebook) aggiungile con **+ Aggiungi evento**. Per aggiungere una parrocchia o una Pro Loco da controllare ogni settimana, modifica `data/event-sources.json`.",
   "",
   "<details><summary>Dettagli tecnici</summary>",
   "",

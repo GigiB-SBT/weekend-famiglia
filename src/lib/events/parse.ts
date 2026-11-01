@@ -134,7 +134,7 @@ export function parseFlyer(text: string, ref: Date = new Date()): FlyerGuess {
 
   let minAge: number | null = null;
   let maxAge: number | null = null;
-  const ageRange = lower.match(/(\d{1,2})\s*[-–a]\s*(\d{1,2})\s*anni/);
+  const ageRange = lower.match(/(\d{1,2})\s*(?:-|–|ai|agli|a)\s*(\d{1,2})\s*anni/);
   const agePlus = lower.match(/dai\s*(\d{1,2})\s*anni/);
   if (ageRange) {
     minAge = Number(ageRange[1]);
