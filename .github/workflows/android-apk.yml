@@ -1,16 +1,12 @@
 name: Android APK
 
-# Builds an installable debug APK of the app on every push to main
-# (or by hand: Actions → Android APK → Run workflow).
-# Download it from the run page, section "Artifacts".
-
 on:
   push:
     branches: [main]
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   apk:
@@ -18,6 +14,23 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+
+      - name: Estrai lo zip caricato da telefono
+        run: |
+          zip="$(ls -1 *.zip 2>/dev/null | head -n 1 || true)"
+          if [ -n "$zip" ]; then
+            rm -rf /tmp/src && mkdir -p /tmp/src
+            unzip -q "$zip" -d /tmp/src
+            if [ -f /tmp/src/package.json ]; then src=/tmp/src; else src="$(ls -d /tmp/src/*/ | head -n 1)"; fi
+            rm -rf "$src/.github"
+            cp -a "$src"/. ./
+            git rm -q "$zip"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -q -m "Codice estratto da $zip"
+            git push
+          fi
 
       - uses: actions/setup-node@v4
         with:
@@ -29,33 +42,43 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - uses: android-actions/setup-android@v3
-
-      - name: Install dependencies
+      - name: Dipendenze
         run: npm ci
 
-      - name: Tests
+      - name: Test
         run: npm test
 
-      - name: Build static web app
+      - name: Build web statica
         run: npm run build:mobile
 
-      - name: Create Android project
+      - name: Progetto Android
         run: |
           npx cap add android
-          npx --yes @capacitor/assets@3.0.5 generate --android \
-            --iconBackgroundColor '#1d5fd1' --splashBackgroundColor '#1d5fd1'
+          npx --yes @capacitor/assets@3.0.5 generate --android --iconBackgroundColor '#1d5fd1' --splashBackgroundColor '#1d5fd1'
           npx cap sync android
 
-      - name: Build APK
+      - name: Compila APK
         working-directory: android
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Rinomina APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk "weekend-famiglia-${{ github.run_number }}.apk"
+
+      - uses: actions/upload-artifact@v4
         with:
           name: weekend-famiglia-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: weekend-famiglia-*.apk
           retention-days: 30
+
+      - name: Pubblica come pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: beta-${{ github.run_number }}
+          name: Weekend in Famiglia beta ${{ github.run_number }}
+          prerelease: true
+          files: weekend-famiglia-*.apk
+          body: |
+            APK di prova per uso personale (firmata con chiave di debug, non per il Play Store).
+            Installazione: apri il file dal telefono e consenti l'installazione da questa fonte.
