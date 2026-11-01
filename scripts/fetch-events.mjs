@@ -17,7 +17,10 @@ const ZONES = {
 };
 const WINDOW_DAYS = 16;
 const MAX_CANDIDATES = 80;
-const KIDS = /bambin|ragazz|famigli|piccol|infanzia|0-18|zerodiciotto|under\s?1[0-6]|kids|junior|laborator|letture animate|lettura animata|burattin|teatro ragazzi|genitori|nati per leggere/i;
+// Explicit signals that an event is FOR children (generic words like "laboratorio" or "ragazzi" alone are not enough).
+const KIDS = /bambin|per (?:i )?ragazz|ragazze e ragazzi|bimb|famigli|piccol[ie]|infanzia|0-18|zerodiciotto|under\s?1[0-6]|\bkids\b|letture animate|lettura animata|burattin|marionett|teatro ragazzi|teatro per ragazzi|nati per leggere|nati per la musica|\b(?:dai|da|dagli)\s?\d{1,2}\s?(?:ai|a)\s?\d{1,2}\s?anni|\bdai\s?\d{1,2}\s?anni|\b\d{1,2}\s?[-–]\s?\d{1,2}\s?anni|scuol[ae] (?:dell'infanzia|primari)/i;
+// Signals of adult-only content that win over a weak kids match.
+const ADULTS = /vietato ai minori|\+18|solo adulti|per adulti|\bover\s?18/i;
 
 const report = [];
 const log = (s) => { console.log(s); report.push(s); };
@@ -49,8 +52,23 @@ function pick(rec, patterns) {
   return null;
 }
 const asText = (v) => (v == null ? "" : Array.isArray(v) ? v.map(asText).join(", ") : typeof v === "object" ? Object.values(v).map(asText).join(" ") : String(v));
-const toDay = (v) => { const s = asText(v); const m = s.match(/(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[1]}-${m[2]}-${m[3]}` : null; };
-const toTime = (v) => { const s = asText(v); const m = s.match(/T(\d{2}):(\d{2})/) ?? s.match(/\b(\d{1,2})[:.](\d{2})\b/); return m && !(m[1] === "00" && m[2] === "00") ? `${m[1].padStart(2, "0")}:${m[2]}` : null; };
+// Dates come as ISO strings, often in UTC ("2026-10-31T23:00:00+00:00" = 1 Nov 00:00 in Rome): convert to Europe/Rome.
+const ROME = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
+function local(v) {
+  const s = asText(v).trim();
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s)) {
+    const d = new Date(s);
+    if (!Number.isNaN(d.getTime())) {
+      const p = Object.fromEntries(ROME.formatToParts(d).map((x) => [x.type, x.value]));
+      const hh = p.hour === "24" ? "00" : p.hour;
+      return { day: `${p.year}-${p.month}-${p.day}`, time: hh === "00" && p.minute === "00" ? null : `${hh}:${p.minute}` };
+    }
+  }
+  const m = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+  return m ? { day: `${m[1]}-${m[2]}-${m[3]}`, time: null } : { day: null, time: null };
+}
+const toDay = (v) => local(v).day;
+const toTime = (v) => local(v).time;
 const slugify = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
 
 function nearestZone(lat, lng) {
@@ -94,7 +112,7 @@ function toCandidate(rec, source) {
   const url = asText(pick(rec, [/^url$|link|permalink|sito|web/i])?.value).trim();
   const free = asText(pick(rec, [/ingresso|prezzo|costo|price|biglietto|ticket/i])?.value);
   const text = `${asText(title.value)}\n${desc}\n${cats}\n${free}`;
-  if (!source.kidsOnly && !KIDS.test(text)) return { skip: "non per bambini" };
+  if (!source.kidsOnly && (!KIDS.test(text) || ADULTS.test(text))) return { skip: "non per bambini" };
 
   const g = parseFlyer(text, today);
   const pos = geo(rec);
