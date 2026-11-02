@@ -1,0 +1,175 @@
+[
+  {
+    "id": "enteparchi-eventi",
+    "name": "Ente Parchi e Biodiversita Emilia Orientale - iniziative ed eventi",
+    "url": "https://enteparchi.bo.it/eventi-iniziative.php",
+    "format": "html",
+    "lastSeen": "2026-05-19",
+    "eventsSeen": [
+      "Biodiversi per natura (famiglie, Gessi) – 2026-05-23",
+      "Breve passeggiata a San Martino, Monte Sole – 2026-05-23",
+      "Geoescursione ad anello, Monte Sole – 2026-05-24",
+      "Percorso famiglie 4-10 anni, Monteveglio – 2026-05-30",
+      "Camminare nel verde, Corno alle Scale – 2026-06-02"
+    ],
+    "verified": false,
+    "notes": "Eventi visti solo nell'articolo DIRE del 19/05/2026 (nessun programma autunnale). La pagina (visto in ricerca solo ?page=6) e bloccata a WebFetch da robots: elenco autunnale non letto. Prenotazione obbligatoria. Gestore del Vidiciatico: eventi@enteparchi.bo.it."
+  },
+  {
+    "id": "enteparchi-gessi-eventi",
+    "name": "Parco Gessi Bolognesi - iniziative ed eventi (Grotta Farneto, Spipola)",
+    "url": "https://www.enteparchi.bo.it/parco.gessi.bolognesi/eventi-iniziative.php",
+    "format": "html",
+    "lastSeen": null,
+    "eventsSeen": [],
+    "verified": false,
+    "notes": "Visto solo nei risultati di ricerca (con schede 'Visita alla Grotta del Farneto', 'Passeggiata nei boschi a pochi passi della Citta'); fetch bloccato da robots."
+  },
+  {
+    "id": "appennino-bolognese-eventi",
+    "name": "Appennino bolognese - eventi (Citta metropolitana di Bologna)",
+    "url": "https://appenninobolognese.cittametropolitana.bo.it/en/events-all",
+    "format": "html",
+    "lastSeen": "2026-11-02",
+    "eventsSeen": [
+      "Tartufesta Camugnano – 2026-11-08",
+      "Tartufesta a Campolo (Grizzana Morandi) – 2026-11-08",
+      "Tartofla (Valsamoggia) – 2026-10-24/2026-11-15"
+    ],
+    "verified": true,
+    "notes": "Solo prima pagina dei risultati: nessuna escursione o castagnata. Filtri per categoria e data sul sito; esiste anche la sezione itineraries."
+  },
+  {
+    "id": "cai-bologna-escursioni",
+    "name": "CAI Bologna - escursioni, corsi, eventi",
+    "url": "https://www.caibo.it/attivita/escursionismo/escursioni-corsi-eventi.html",
+    "format": "html",
+    "lastSeen": null,
+    "eventsSeen": [],
+    "verified": false,
+    "notes": "URL visto nei risultati di ricerca; WebFetch fallito (client_error). Presente anche https://www.caibo.it/articoli/alpinismo-giovanile-pubblicato-il-programma-per-il-2026.html (programma 2026 pubblicato, contenuto non letto)."
+  },
+  {
+    "id": "cai-bologna-alpinismo-giovanile",
+    "name": "CAI Bologna - alpinismo giovanile",
+    "url": "https://www.caibo.it/attivita/alpinismo-giovanile.html",
+    "format": "html",
+    "lastSeen": null,
+    "eventsSeen": [],
+    "verified": false,
+    "notes": "Visto solo in ricerca; fetch fallito. Dovrebbe contenere il programma 2026 per ragazzi (eta e date da verificare)."
+  },
+  {
+    "id": "consulta-escursionismo-colline",
+    "name": "Le colline fuori della porta (Consulta Escursionismo TM Bologna + Fondazione Villa Ghigi)",
+    "url": "https://consultaescursionismotmbologna.it/",
+    "format": "html",
+    "lastSeen": "2025-11-16",
+    "eventsSeen": [
+      "Le colline fuori della porta, 19ª edizione – 2025-03-23/2025-11-16 (18 uscite domenicali, gratuite)"
+    ],
+    "verified": false,
+    "notes": "URL letto nel testo della pagina Bologna Welcome (edizione 2025); il sito non e raggiungibile da WebFetch (non in allowlist). Prenotazione online dal lunedi prima (escursioni.consultaescursionismotmbologna.it), max 40 persone. Edizione 2026 non vista. Contatto info@consultaescursionismotmbologna.it."
+  },
+  {
+    "id": "villa-ghigi-passeggiate",
+    "name": "Fondazione Villa Ghigi - passeggiate (via Il Resto del Carlino)",
+    "url": "https://www.ilrestodelcarlino.it/bologna/cosa-fare/passeggiate-villa-ghigi-304b8a2a",
+    "format": "html",
+    "lastSeen": "2023-06-04",
+    "eventsSeen": [
+      "Canto degli uccelli a Villa Ghigi – 2023-03-26",
+      "Lagaro e tombe romane (treno) – 2023-04-16",
+      "Villa Aldini – 2023-05-07"
+    ],
+    "verified": false,
+    "notes": "Programma 2023 (vecchio): usato solo come esempio di formato. Max 30 persone, prenotazione via email info@fondazionevillaghigi.it il lunedi prima. Sito ufficiale della Fondazione non visto come URL."
+  },
+  {
+    "id": "trekking-col-treno",
+    "name": "Trekking col treno 2026 (CAI Bologna + Territorio turistico Bologna-Modena)",
+    "url": "https://www.ilrestodelcarlino.it/bologna/cosa-fare/escursioni-40-percorsi-trekking-treno-2026-3b540525",
+    "format": "html",
+    "lastSeen": "2026-11-02",
+    "eventsSeen": [
+      "Trekking col treno 2026 – 2026-03-28/2026-11-29 (40 uscite)",
+      "Camminata geologica Contrafforte Pliocenico e grotte di Soprasasso – novembre 2026"
+    ],
+    "verified": true,
+    "notes": "Prenotazione obbligatoria su trekkingcoltreno.it (URL citato nel testo, non aperto), max 40 persone. Famiglie non specificate: controllare lunghezza e dislivello di ogni uscita."
+  },
+  {
+    "id": "guide-piccoli-esploratori",
+    "name": "Piccoli esploratori del bosco (passeggiate per famiglie, Bologna Welcome)",
+    "url": "https://www.familygo.eu/vacanze-con-bambini/eventi/bologna/piccoli-esploratori-del-bosco-passeggiate-appennino-bolognese/",
+    "format": "html",
+    "lastSeen": "2021-10-03",
+    "eventsSeen": [
+      "Piccoli esploratori del bosco, Brasimone – 2021-10-03"
+    ],
+    "verified": false,
+    "notes": "Edizione 2021 (vecchia). Passeggiate per bimbi 1-3 e 4-12 anni con guide, una domenica al mese. Nessuna associazione di guide ambientali con calendario aggiornato trovata; Arca Appennino Bolognese e citata dal Carlino come co-organizzatrice."
+  },
+  {
+    "id": "castagne-varano-fondazione-carisbo",
+    "name": "Parco didattico del castagno di Varano (Fondazione Carisbo)",
+    "url": "https://www.ilrestodelcarlino.it/bologna/cronaca/raccolta-collettiva-al-castagneto-di-dcd84831",
+    "format": "html",
+    "lastSeen": "2026-11-02",
+    "eventsSeen": [
+      "Dal bosco alla farina – 2026-10-25"
+    ],
+    "verified": true,
+    "notes": "Evento con prenotazione, ingresso gratuito, pranzo a parte."
+  },
+  {
+    "id": "castagne-calendario-viaggiapiccoli",
+    "name": "Castagne in Emilia Romagna - sagre e attivita bambini (Viaggiapiccoli)",
+    "url": "https://www.viaggiapiccoli.com/castagne-in-emilia-romagna-bambini/",
+    "format": "html",
+    "lastSeen": "2026-11-02",
+    "eventsSeen": [
+      "Castagneto in festa, Rio Verde, Sasso Marconi – 2026-10-10/2026-11-01",
+      "Gnomi, ricci e castagne, Vidiciatico – date 2025 da confermare",
+      "Castagnata nel bosco, Monghidoro – date non indicate"
+    ],
+    "verified": true,
+    "notes": "Elenco curato, non calendario ufficiale. Alcune date sono superate."
+  },
+  {
+    "id": "castagne-sagre-castel-del-rio",
+    "name": "Le castagne piu buone in Emilia-Romagna (SportOutdoor24)",
+    "url": "https://www.sportoutdoor24.it/viaggi/italia/le-castagne-piu-buone-in-emilia-romagna-le-gite-nei-boschi-dove-raccoglierle-questo-autunno/",
+    "format": "html",
+    "lastSeen": "2026-11-02",
+    "eventsSeen": [
+      "Sagra del Marrone, Castel del Rio – 2026-10-25 e 2026-11-01"
+    ],
+    "verified": true,
+    "notes": "Elenco di sagre, non calendario ufficiale. Granaglione: castagneto sperimentale (senza date). Castel del Rio: castagneti per lo piu privati. Il sito travelemiliaromagna.it conferma che non tutti i castagneti ammettono la raccolta."
+  },
+  {
+    "id": "castagne-castel-daiano-portaleventi",
+    "name": "Festa della Castagna e del Borlengo, Castel d'Aiano (Portale Eventi)",
+    "url": "https://portaleventi.it/evento/festa-della-castagna-e-del-borlengo-a-castel-daiano",
+    "format": "html",
+    "lastSeen": "2026-11-02",
+    "eventsSeen": [
+      "Festa della Castagna e del Borlengo – 2026-10-18"
+    ],
+    "verified": true,
+    "notes": "Segnata come evento passato; nessuna raccolta, solo sagra (contatto prolocolabante@gmail.com)."
+  },
+  {
+    "id": "bologna-bimbi-castagnamm",
+    "name": "CASTAGNAMM (Bologna Bimbi) - raccolta castagne in Esploraria",
+    "url": "https://www.bolognabimbi.it/evento/castagnamm2025/",
+    "format": "html",
+    "lastSeen": "2026-11-02",
+    "eventsSeen": [
+      "CASTAGNAMM 2025 – data non indicata"
+    ],
+    "verified": true,
+    "notes": "Parco Esploraria, Appennino modenese (fuori provincia); date e costi non presenti. Contatto info@bolognabimbi.it."
+  }
+]

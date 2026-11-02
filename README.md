@@ -69,6 +69,13 @@ A ogni push su `main` la GitHub Action `.github/workflows/android-apk.yml` costr
 - Feste solo su volantini, WhatsApp o Facebook: **+ Aggiungi evento** nell'app.
 - **Promemoria** (solo app Android): mercoledì 18:30 eventi da approvare, venerdì 9:00 rivedi la mail. Si attivano dalla scheda Eventi.
 
+## Aree, sagre, escursioni
+
+- **Due aree**: Bologna e Grottammare (selettore in alto nell'app; meteo per area). Zone in `src/data/zones.ts`, comuni per la distanza in `data/comuni.json`.
+- **Catalogo** = tutti i `data/seed_attivita_*.csv` (`npm run seed`): Bologna, escursioni colli/Appennino e castagneti, Grottammare. Colonna `season_months` (es. `9|10|11`): l'attività compare solo in quei mesi e, se dura al massimo 3 mesi, ha una piccola priorità.
+- **Sagre e calendari provinciali**: fonti con `"listing": true, "geocode": true` (titolo, poi comune e date). Le date su più giorni ("dal 6 al 15 novembre", "6 November – 15 November 2026") sono riconosciute; il comune nel testo dà la distanza. Le pagine mensili usano `urlTemplate` con `{monthIt}`, `{monthEn}`, `{year}`. Si prendono solo i fatti (nome, comune, date) con link alla fonte; eventiesagre.it vieta la riproduzione e non è usato.
+- **Distanze** 50 e 80 km per le gite in Appennino.
+
 ## Seed del catalogo
 
 ```bash
@@ -106,4 +113,5 @@ RLS: il catalogo è leggibile solo se `published`; `families`, `recommendations`
 | M3-lite | Meteo (Open-Meteo) | Fatto |
 | M4-lite | Bozza mail del venerdì e invio dopo approvazione | Bozza fatta; invio, log e import CSV famiglie da fare |
 | E1 | Eventi: aggiunta manuale, coda approvazione, lettura agende, promemoria | Fatto |
+| E1b | Sagre, escursioni e castagneti stagionali, area Grottammare | Fatto (dati da verificare) |
 | E2 | Eventi su Supabase, notifica immediata | Da fare (serve account Supabase) |

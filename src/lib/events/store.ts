@@ -143,7 +143,7 @@ export function eventToForm(a: Activity): EventForm {
     startTime: a.event?.startTime ?? "",
     endTime: a.event?.endTime ?? "",
     place: a.address,
-    zone: (a.zone in ZONES ? a.zone : "Santo Stefano") as ZoneName,
+    zone: (a.zone in ZONES ? a.zone : nearestZone(a.lat, a.lng)) as ZoneName,
     minAge: a.minAge,
     maxAge: a.maxAge,
     costBand: a.costBand,
@@ -154,12 +154,29 @@ export function eventToForm(a: Activity): EventForm {
   };
 }
 
+/** Zone closest to a point (events read from listings carry a comune, not a zone). */
+export function nearestZone(lat: number | null, lng: number | null): ZoneName {
+  let best: ZoneName = "Borgo Panigale-Reno";
+  if (lat == null || lng == null) return best;
+  let bestD = Infinity;
+  for (const [name, z] of Object.entries(ZONES) as [ZoneName, (typeof ZONES)[ZoneName]][]) {
+    const d = Math.hypot((lat - z.lat) * 111, (lng - z.lng) * 79);
+    if (d < bestD) {
+      bestD = d;
+      best = name;
+    }
+  }
+  return best;
+}
+
 const DAY = new Intl.DateTimeFormat("it-IT", { weekday: "short", day: "numeric", month: "short" });
 
 /** "dom 8 nov · 15:00–18:00" */
 export function eventWhen(a: Activity): string {
   if (!a.event) return "";
-  const d = DAY.format(new Date(`${a.event.date}T12:00:00`));
+  const d = a.event.endDate
+    ? `${DAY.format(new Date(`${a.event.date}T12:00:00`))} → ${DAY.format(new Date(`${a.event.endDate}T12:00:00`))}`
+    : DAY.format(new Date(`${a.event.date}T12:00:00`));
   const t = a.event.startTime ? ` · ${a.event.startTime}${a.event.endTime ? `–${a.event.endTime}` : ""}` : "";
   return `${d}${t}`;
 }

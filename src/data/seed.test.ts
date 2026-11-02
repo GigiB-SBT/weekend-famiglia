@@ -11,8 +11,10 @@ const base: WeekendWeather = {
 };
 
 describe("seed catalogue", () => {
-  it("has 30 valid activities with coordinates and source", () => {
-    expect(activities).toHaveLength(30);
+  it("has valid activities for both areas, with coordinates and source", () => {
+    expect(activities.length).toBeGreaterThanOrEqual(45);
+    const grottammare = activities.filter((a) => (a.lat ?? 0) < 43.5);
+    expect(grottammare.length).toBeGreaterThanOrEqual(15);
     for (const a of activities) {
       expect(a.minAge).toBeLessThanOrEqual(a.maxAge);
       expect(a.lat).not.toBeNull();

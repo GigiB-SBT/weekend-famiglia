@@ -87,6 +87,18 @@ describe("hard filters", () => {
   });
 });
 
+describe("seasonal activities", () => {
+  it("chestnut picking only in autumn", () => {
+    const chestnuts = act({ slug: "castagne", category: "fattoria", setting: "outdoor", seasonMonths: [9, 10, 11] });
+    expect(scoreActivities(family, [chestnuts], dry).scored).toHaveLength(0); // 5-6 December: out of season
+    const november = { ...dry, saturday: "2026-11-07", sunday: "2026-11-08" };
+    expect(scoreActivities(family, [chestnuts], november).scored).toHaveLength(1);
+    // a weekend straddling two months counts if either day is in season
+    const straddle = { ...dry, saturday: "2026-11-30", sunday: "2026-12-01" };
+    expect(scoreActivities(family, [chestnuts], straddle).scored).toHaveLength(1);
+  });
+});
+
 describe("weather and ranking", () => {
   const park = act({ slug: "park", category: "natura", setting: "outdoor", weatherFit: "dry_only" });
   const museum = act({ slug: "museum", category: "museo", setting: "indoor" });

@@ -231,9 +231,12 @@ async function readPage(source) {
   }
   let n = 0;
   for (const { url, text } of texts) {
-    for (const ev of extractEvents(text, { ref: today, from, to })) {
-      const z = ZONES[source.zone] ? source.zone : "Borgo Panigale-Reno";
-      const [lat, lng] = source.lat != null ? [source.lat, source.lng] : ZONES[z];
+    for (const ev of extractEvents(text, { ref: today, from, to, listing: Boolean(source.listing) })) {
+      // Aggregators list many towns: use the comune named in the text when the source asks for it.
+      const where = source.geocode && ev.comune ? ev.comune : null;
+      if (source.geocode && !where) continue; // can't place it: skip rather than guess
+      const z = where ? where.name : source.zone ?? "Borgo Panigale-Reno";
+      const [lat, lng] = where ? [where.lat, where.lng] : source.lat != null ? [source.lat, source.lng] : ZONES[z] ?? ZONES["Borgo Panigale-Reno"];
       const g = ev.guess;
       n++;
       out.push({
@@ -250,7 +253,7 @@ async function readPage(source) {
         priceNote: g.costBand ? "" : "costo da verificare",
         durationMin: null,
         bookingRequired: null,
-        address: source.address ?? source.name,
+        address: where ? where.name : source.address ?? source.name,
         zone: z,
         lat, lng,
         openingNote: ev.explicitDate ? "" : "data dedotta dal giorno della settimana: verificare",
@@ -259,12 +262,12 @@ async function readPage(source) {
         isDemo: false,
         event: {
           date: ev.date,
-          endDate: null,
+          endDate: ev.endDate,
           startTime: ev.startTime,
           endTime: ev.endTime,
           organizer: source.name,
           origin: "agenda",
-          approxPosition: source.lat == null,
+          approxPosition: true,
         },
       });
     }
@@ -276,7 +279,23 @@ async function readPage(source) {
 
 const all = [];
 const skipped = {};
-for (const source of SOURCES.filter((s) => s.type === "page" && s.enabled !== false)) {
+// Monthly pages (sagre sites): one URL per month touched by the window.
+const MONTHS_IT = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
+const MONTHS_EN = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+function expand(source) {
+  if (!source.urlTemplate) return [source];
+  const months = new Set([from.slice(0, 7), to.slice(0, 7)]);
+  return [...months].map((ym) => {
+    const [y, m] = ym.split("-").map(Number);
+    const url = source.urlTemplate
+      .replace("{monthIt}", MONTHS_IT[m - 1])
+      .replace("{monthEn}", MONTHS_EN[m - 1])
+      .replace("{year}", String(y))
+      .replace("{mm}", String(m).padStart(2, "0"));
+    return { ...source, url, name: `${source.name} · ${MONTHS_IT[m - 1]}` };
+  });
+}
+for (const source of SOURCES.filter((s) => s.type === "page" && s.enabled !== false).flatMap(expand)) {
   all.push(...(await readPage(source)));
 }
 for (const source of SOURCES) {

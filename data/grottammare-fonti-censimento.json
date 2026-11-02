@@ -1,0 +1,231 @@
+[
+  {
+    "id": "diocesi-sbt-home",
+    "name": "Diocesi San Benedetto del Tronto-Ripatransone-Montalto - home e notizie",
+    "kind": "diocesi",
+    "area": "San Benedetto del Tronto",
+    "url": "https://www.diocesisbt.org/",
+    "format": "html",
+    "lastSeen": "2026-10-07",
+    "eventsSeen": [
+      "Prima Assemblea Sinodale delle Diocesi del Piceno – 24 ottobre 2026 (parrocchia Sacro Cuore, Centobuchi)",
+      "Messaggio ai pescatori alla ripresa della pesca – 2026-09-29",
+      "L'alter Franciscus: percorso tra arte e fede – 2026-09-18"
+    ],
+    "verified": true,
+    "notes": "Home con ultime notizie (date tipo 'Ott 07 2026'). Elenco completo notizie: /iniziative-pastorali/ (non aperto direttamente). Poche proposte per famiglie: taglio pastorale/istituzionale."
+  },
+  {
+    "id": "diocesi-sbt-agenda",
+    "name": "Diocesi SBT - Agenda diocesana",
+    "kind": "diocesi",
+    "area": "San Benedetto del Tronto",
+    "url": "https://www.diocesisbt.org/agenda-diocesana/",
+    "format": "html",
+    "lastSeen": null,
+    "eventsSeen": [],
+    "verified": true,
+    "notes": "Pagina aperta ma senza eventi nel testo estratto (probabile caricamento dinamico o agenda vuota): da controllare nel browser. Esiste anche /agenda-del-vescovo/."
+  },
+  {
+    "id": "diocesi-sbt-parrocchie",
+    "name": "Diocesi SBT - elenco parrocchie",
+    "kind": "parish",
+    "area": "Diocesi (tutti i comuni)",
+    "url": "https://www.diocesisbt.org/parrocchie/",
+    "format": "html",
+    "lastSeen": null,
+    "eventsSeen": [],
+    "verified": true,
+    "notes": "Elenco piatto con filtro per comune; ogni parrocchia ha scheda https://www.diocesisbt.org/[slug]/ (es. /san-niccolo-monteprandone/, non aperta). Nessun sito/FB di parrocchia trovato qui: nessun bollettino settimanale individuato."
+  },
+  {
+    "id": "turismo-sbt-eventi",
+    "name": "Turismo San Benedetto del Tronto - calendario eventi",
+    "kind": "comune",
+    "area": "San Benedetto del Tronto (incl. Porto d'Ascoli)",
+    "url": "https://turismo.comunesbt.it/eventi",
+    "format": "html",
+    "lastSeen": null,
+    "eventsSeen": [
+      "Visitiamo la Sentina - Escursione nella Storia – domenica 8 novembre 9:00-13:00",
+      "Sun Beach da paura: Halloween Tour – 31 ott-1 nov",
+      "Festival di Fa'Volà (bicentenario Collodi) – 19 ott-31 dic",
+      "Teatro Concordia stagione 2026/27 (anche spettacoli per famiglie) – dal 19 novembre 2026 al 29 aprile 2027",
+      "Teatro San Filippo Neri CONTROVENTO – dal 20 novembre 2026 al 19 marzo 2027"
+    ],
+    "verified": true,
+    "notes": "Fonte migliore trovata, aggiornata ott 2026. Date in formato 'domenica 8 Novembre @ 9:00 - 13:00'. Pagine mensili: /eventi/mese/2026-10/ (trovata, non aperta); novembre: https://turismo.comunesbt.it/eventi-a-san-benedetto-del-tronto/?when=november . lastSeen null: la pagina non riporta data di pubblicazione."
+  },
+  {
+    "id": "sentina-riserva",
+    "name": "Riserva Naturale Sentina",
+    "kind": "other",
+    "area": "San Benedetto del Tronto (Porto d'Ascoli)",
+    "url": "https://riservasentina.it",
+    "format": "html",
+    "lastSeen": null,
+    "eventsSeen": [
+      "Visitiamo la Sentina – 8 novembre 2026 (da turismo.comunesbt.it)",
+      "Visita guidata invernale – 6 dicembre 2026 (da initaly.it)",
+      "Visita alla Sentina – 27 dicembre 2026 (da initaly.it)"
+    ],
+    "verified": false,
+    "notes": "Sito ufficiale non apribile dal fetch (non in allowlist): le date vengono da turismo.comunesbt.it e da https://www.initaly.it/en/articolo/riserva-della-sentina-2026-visite-guidate-birdwatching-ed-eventi-15409 . Verificare sezione news/eventi sul sito."
+  },
+  {
+    "id": "sagr-it-ascoli-sibillini",
+    "name": "sagr.it - area Ascoli e Sibillini",
+    "kind": "sagre",
+    "area": "Provincia di Ascoli Piceno",
+    "url": "https://sagr.it/marche/ascoli-e-sibillini",
+    "format": "html",
+    "lastSeen": "2026-11-15",
+    "eventsSeen": [
+      "Castagne al borgo (Cupra Marittima) – 31 ottobre - 1 novembre 2026",
+      "Polentata al Castello (Monte Urano) – 7 novembre - 15 novembre 2026",
+      "Festa di San Martino (Caldarola) – 15 novembre 2026"
+    ],
+    "verified": true,
+    "notes": "NON esiste pagina /sagre/provincia/ascoli-piceno: in https://sagr.it/sagre/provincia le Marche hanno solo Macerata, Ancona, Pesaro e Urbino. Equivalente: area 'ascoli-e-sibillini' (pattern sagr.it/{regione}/{area}/{mese-anno}, es. /marche/ascoli-e-sibillini/agosto-2026; novembre: .../novembre-2026 per analogia, EN verificata: /en/marche/ascoli-and-sibillini/november-2026). Esiste versione italiana senza /en/. Date IT verbatim: '1 luglio – 31 agosto 2026', '27 agosto 2026', '21 agosto – 23 agosto 2026'. Copre poco la costa (Cupra Marittima, Ripatransone sì; Grottammare/SBT no). lastSeen = ultima data evento vista (novembre 2026)."
+  },
+  {
+    "id": "itinerarinelgusto-ap",
+    "name": "Itinerari nel Gusto - sagre e feste Ascoli Piceno (novembre)",
+    "kind": "sagre",
+    "area": "Provincia di Ascoli Piceno",
+    "url": "https://www.itinerarinelgusto.it/sagre-e-feste/ascoli-piceno/novembre",
+    "format": "html",
+    "lastSeen": null,
+    "eventsSeen": [
+      "Sagra della polenta al sugo di castagne (Trivio, Ripatransone) – Novembre (verifica le date)",
+      "Appassimenti Aperti (Serrapetrona) – da 08 a 15 novembre 2026"
+    ],
+    "verified": true,
+    "notes": "Pagine per mese: /sagre-e-feste/ascoli-piceno/[mese]. Date formato 'da 05 a 06 settembre 2026 (concluso)' oppure 'Novembre (verifica le date)' = periodo presunto non confermato. Quasi nulla sulla costa."
+  },
+  {
+    "id": "sagramap-ap",
+    "name": "Sagramap - sagre provincia di Ascoli Piceno",
+    "kind": "sagre",
+    "area": "Provincia di Ascoli Piceno",
+    "url": "https://sagramap.com/marche/ascoli-piceno",
+    "format": "html",
+    "lastSeen": "2026-11-11",
+    "eventsSeen": [
+      "Fiera di San Martino (Grottammare) – 10-11 nov 2026",
+      "Sagra della Polenta (Ripatransone) – inizio novembre 2026",
+      "Castagne al borgo (Cupra Marittima) – 31 ott - 1 nov 2026"
+    ],
+    "verified": true,
+    "notes": "Formato date '10-11 nov 2026'. Pagina piu' utile per la costa a novembre 2026 (include Grottammare e Cupra)."
+  },
+  {
+    "id": "sagretoday-ap",
+    "name": "SagreToday - sagre provincia di Ascoli Piceno",
+    "kind": "sagre",
+    "area": "Provincia di Ascoli Piceno",
+    "url": "https://sagretoday.it/sagre/marche/ascoli-piceno/",
+    "format": "html",
+    "lastSeen": "2025-11-22",
+    "eventsSeen": [
+      "Sagra della Polenta al Sugo di Castagne (Montefiore dell'Aso) – Ven 7 Novembre 2025 (concluso)",
+      "Fiera di San Martino (Grottammare) – Date da confermare"
+    ],
+    "verified": true,
+    "notes": "Contenuto fermo al 2025 (probabile cache): poco affidabile per 2026. Date formato 'Ven 7 - Dom 9 Novembre 2025'."
+  },
+  {
+    "id": "eventiesagre-grottammare",
+    "name": "eventiesagre.it - Grottammare",
+    "kind": "sagre",
+    "area": "Grottammare",
+    "url": "https://www.eventiesagre.it/cerca/cat/sez/mesi/Marche/AP/Grottammare/rilib",
+    "format": "html",
+    "lastSeen": null,
+    "eventsSeen": [],
+    "verified": false,
+    "notes": "vietata la riproduzione: non usare"
+  },
+  {
+    "id": "e-borghi-grottammare",
+    "name": "e-borghi - scheda Grottammare",
+    "kind": "other",
+    "area": "Grottammare",
+    "url": "https://www.e-borghi.com/en/village-conntection/grottammare-it/",
+    "format": "html",
+    "lastSeen": "2026-07-19",
+    "eventsSeen": [
+      "Borgo diVino on Tour 2026 – 17-19 luglio 2026",
+      "Sagra de lu Bucculotte cu lu Crastate – 16-19 luglio 2026"
+    ],
+    "verified": true,
+    "notes": "Aggregatore turistico, ultimi eventi visti a luglio 2026: non aggiornato per autunno. Utile solo come segnalazione di eventi ricorrenti."
+  },
+  {
+    "id": "comune-offida-eventi",
+    "name": "Comune di Offida - novita/eventi (allegati)",
+    "kind": "comune",
+    "area": "Offida",
+    "url": "https://offida-api.municipiumapp.it/s3/4713/allegati/novit/eventi/programma.pdf",
+    "format": "pdf_list",
+    "lastSeen": "2026-07-12",
+    "eventsSeen": [
+      "500 anni in Cinquecento (raduno Fiat 500) – 11-12 luglio 2026"
+    ],
+    "verified": true,
+    "notes": "Sito comunale su piattaforma Municipium (dominio principale non individuato); questo PDF e' un singolo programma, non un elenco. Cercare la sezione Novita/Eventi del sito del Comune."
+  },
+  {
+    "id": "comune-grottammare",
+    "name": "Comune di Grottammare - eventi/notizie",
+    "kind": "comune",
+    "area": "Grottammare",
+    "url": null,
+    "format": "none",
+    "lastSeen": null,
+    "eventsSeen": [],
+    "verified": false,
+    "notes": "Sito istituzionale non individuato nei risultati. Per riferimento stagione 2024: Teatro delle Energie, Fiera di San Martino 10-11 nov 2026 (da sagramap). Albo: grottammare.civicam.it (solo atti). Da cercare a mano."
+  },
+  {
+    "id": "comune-cupra-marittima",
+    "name": "Comune di Cupra Marittima",
+    "kind": "comune",
+    "area": "Cupra Marittima",
+    "url": null,
+    "format": "none",
+    "lastSeen": null,
+    "eventsSeen": [
+      "Castagne al borgo – 31 ott - 1 nov 2026 (da sagr.it)"
+    ],
+    "verified": false,
+    "notes": "Sito comunale non individuato."
+  },
+  {
+    "id": "comune-ripatransone",
+    "name": "Comune di Ripatransone",
+    "kind": "comune",
+    "area": "Ripatransone",
+    "url": null,
+    "format": "none",
+    "lastSeen": null,
+    "eventsSeen": [
+      "Sagra della polenta al sugo di castagne (Trivio) – inizio novembre 2026 (da sagramap)"
+    ],
+    "verified": false,
+    "notes": "Sito comunale su piattaforma Municipium (ripatransone-api.municipiumapp.it) ma dominio principale non individuato."
+  },
+  {
+    "id": "comuni-restanti",
+    "name": "Monteprandone, Acquaviva Picena, Monsampolo, Massignano, Montefiore dell'Aso, Pedaso, Martinsicuro, Alba Adriatica",
+    "kind": "comune",
+    "area": "varie",
+    "url": null,
+    "format": "none",
+    "lastSeen": null,
+    "eventsSeen": [],
+    "verified": false,
+    "notes": "Nessuna pagina eventi ufficiale individuata nei risultati; per Alba Adriatica e Martinsicuro i soli risultati erano eventiesagre.it (vietato). Montefiore dell'Aso: sagra polenta al sugo di castagne (novembre, da sagretoday 2025). Pro Loco: nessun sito trovato; probabile solo Facebook."
+  }
+]

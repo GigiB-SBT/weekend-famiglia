@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-// Converte data/seed_attivita_bologna.csv in:
+// Converte tutti i data/seed_attivita_*.csv in:
 //  - src/data/seed-activities.json (usato dalla modalità demo dell'app)
 //  - supabase/seed.sql (insert idempotenti per Supabase)
 // Uso: npm run seed
-import { readFileSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 
-const CSV = "data/seed_attivita_bologna.csv";
+// Every data/seed_attivita_*.csv (Bologna, escursioni, Grottammare…) goes into one catalogue.
+const CSVS = readdirSync("data").filter((f) => /^seed_attivita_.*\.csv$/.test(f)).sort().map((f) => `data/${f}`);
 
 function parseCsv(text) {
   const rows = [];
@@ -33,8 +34,10 @@ function parseCsv(text) {
 const num = (v) => (v === "" || v == null ? null : Number(v));
 const bool = (v) => (v === "true" ? true : v === "false" ? false : null);
 
-const raw = parseCsv(readFileSync(CSV, "utf8").replace(/^﻿/, ""));
-const activities = raw.map((r) => ({
+const raw = CSVS.flatMap((f) => parseCsv(readFileSync(f, "utf8").replace(/^\uFEFF/, "")));
+const seen = new Set();
+const unique = raw.filter((r) => r.slug && !seen.has(r.slug) && seen.add(r.slug));
+const activities = unique.map((r) => ({
   slug: r.slug,
   title: r.title,
   category: r.category,
@@ -57,6 +60,7 @@ const activities = raw.map((r) => ({
   status: r.status || "da_verificare",
   isDemo: r.is_demo !== "false",
   lastChecked: r.last_checked || null,
+  seasonMonths: r.season_months ? r.season_months.split(/[|;,\s]+/).map(Number).filter((m) => m >= 1 && m <= 12) : null,
 }));
 
 writeFileSync("src/data/seed-activities.json", JSON.stringify(activities, null, 2) + "\n");
@@ -66,13 +70,14 @@ const sql = [
   "-- Generato da scripts/seed-from-csv.mjs — attività demo da verificare",
   ...activities.map(
     (a) =>
-      `insert into activities (slug,title,category,description,min_age,max_age,multi_age_note,setting,weather_fit,cost_band,price_note,duration_min,booking_required,opening_note,source_url,status,is_demo,last_checked) values (${[
+      `insert into activities (slug,title,category,description,min_age,max_age,multi_age_note,setting,weather_fit,cost_band,price_note,duration_min,booking_required,opening_note,source_url,status,is_demo,last_checked,season_months) values (${[
         q(a.slug), q(a.title), q(a.category), q(a.description), a.minAge, a.maxAge, q(a.multiAgeNote),
         q(a.setting), q(a.weatherFit), q(a.costBand), q(a.priceNote), a.durationMin ?? "null",
         a.bookingRequired ?? "null", q(a.openingNote), q(a.sourceUrl), q(a.status), a.isDemo, q(a.lastChecked),
+        a.seasonMonths ? `'{${a.seasonMonths.join(",")}}'` : "null",
       ].join(",")}) on conflict (slug) do nothing;`,
   ),
 ].join("\n");
 writeFileSync("supabase/seed.sql", sql + "\n");
 
-console.log(`OK: ${activities.length} attività → src/data/seed-activities.json, supabase/seed.sql`);
+console.log(`OK: ${activities.length} attività da ${CSVS.length} file → src/data/seed-activities.json, supabase/seed.sql`);

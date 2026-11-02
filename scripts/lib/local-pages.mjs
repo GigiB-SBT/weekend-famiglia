@@ -6,13 +6,28 @@ import { existsSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { parseDate, parseFlyer, parseTimes } from "../../src/lib/events/parse.ts";
+import { readFileSync } from "node:fs";
+import { parseDate, parseDateRange, parseFlyer, parseTimes } from "../../src/lib/events/parse.ts";
+
+const COMUNI = JSON.parse(readFileSync(new URL("../../data/comuni.json", import.meta.url), "utf8"));
+const GAZETTEER = Object.entries(COMUNI)
+  .filter(([k]) => !k.startsWith("_"))
+  .flatMap(([area, list]) => Object.entries(list).map(([name, [lat, lng]]) => ({ name, lat, lng, area })))
+  .sort((a, b) => b.name.length - a.name.length); // longest first: "San Lazzaro di Savena" before "Bologna"
+const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[’`]/g, "'");
+
+/** Finds the most specific comune named in a text (city name only as last resort). */
+export function findComune(text) {
+  const t = norm(text);
+  const hits = GAZETTEER.filter((c) => new RegExp(`(^|[^a-z])${norm(c.name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z]|$)`).test(t));
+  return hits.find((c) => c.name !== "Bologna") ?? hits[0] ?? null;
+}
 
 const PDF_JS_VERSION = "5.4.624";
 const UA = "weekend-famiglia-bot/1.0 (uso personale, 1 richiesta a settimana)";
 
 // Family events typical of parishes and small towns.
-const STRONG = /castagnat|castagne|marroni|caldarrost|vin brul|halloween|tombol|sagra|mercatin|presepe vivente|presepi viventi|befana|carneval|burattin|marionett|spettacolo|pesca di beneficenza|lotteria|crescentin|tigell|polentat|gnoccat|tortellin(?:ata)?|grigliat|festa (?:della|di|del) (?:comunit|famigli|parrocchi|quartiere|paese|borgo|autunno|primavera|estate|natale|halloween|bambin|ragazz)|festa insieme|giochi per (?:bambini|ragazzi|tutti)|caccia al tesoro|laborator\w* per bambin|cinema per (?:bambini|ragazzi|famiglie)|teatro per (?:bambini|ragazzi|famiglie)/i;
+const STRONG = /escursion[ei]|passeggiat[ae]|camminat[ae]|trekking|ciaspolat|raccolta (?:delle |di )?castagne|visita guidata|caccia ai funghi|sagr[ae]|fiera|festa (?:di|de[li]+) san |festa (?:della|del|dei|delle) (?:castagn|vin|olio|tartuf|polent|tortell|ravio|cappellett|crescent|zucca|uva|mosto|porchett|olive|pesce|brodett)|mercatin|castagnat|castagne|marroni|caldarrost|vin brul|halloween|tombol|sagra|mercatin|presepe vivente|presepi viventi|befana|carneval|burattin|marionett|spettacolo|pesca di beneficenza|lotteria|crescentin|tigell|polentat|gnoccat|tortellin(?:ata)?|grigliat|festa (?:della|di|del) (?:comunit|famigli|parrocchi|quartiere|paese|borgo|autunno|primavera|estate|natale|halloween|bambin|ragazz)|festa insieme|giochi per (?:bambini|ragazzi|tutti)|caccia al tesoro|laborator\w* per bambin|cinema per (?:bambini|ragazzi|famiglie)|teatro per (?:bambini|ragazzi|famiglie)/i;
 // Purely liturgical / pastoral notices are not weekend outings.
 const LITURGY_ONLY = /^(?:(?!castagn|tombol|sagra|mercatin|festa|giochi|spettacol|crescentin|pranzo|cena|merenda).)*(?:santa messa|s\. messa|messa|rosario|adorazione|confession|catechism|celebrazion|liturgi|veglia|novena|esequie|funeral)/i;
 
@@ -107,29 +122,35 @@ export async function pdfToText(buffer) {
 /**
  * Splits text into small blocks (paragraph-ish) and returns those that describe a dated family event.
  * @param {string} text
- * @param {{ ref?: Date, from?: string, to?: string }} [opts]
+ * @param {{ ref?: Date, from?: string, to?: string, maxDays?: number, listing?: boolean }} [opts]
  */
 export function extractEvents(text, opts = {}) {
-  const { ref = new Date(), from, to } = opts;
+  const { ref = new Date(), from, to, maxDays = 45, listing = false } = opts;
   const blocks = text
     .split(/\n(?=\s*(?:[A-ZÀ-Ý•\-–*▪●]|\d{1,2}[\s/.]))/)
     .map((b) => b.replace(/\s+/g, " ").trim())
-    .filter((b) => b.length > 12 && b.length < 900);
+    .filter((b) => b.length > 2 && b.length < 900);
   const found = [];
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i];
     if (!STRONG.test(block) || LITURGY_ONLY.test(block)) continue;
     // The date may sit in the block or in the one just before (e.g. "DOMENICA 8 NOVEMBRE" heading).
-    const withPrev = `${blocks[i - 1] ?? ""} ${block}`;
-    const date = parseDate(block, ref) ?? parseDate(withPrev, ref);
+    // Bulletins put the date before (heading); listings (sagre sites) put town and date after the title.
+    const withPrev = listing ? `${block} ${blocks[i + 1] ?? ""} ${blocks[i + 2] ?? ""}` : `${blocks[i - 1] ?? ""} ${block}`;
+    const range = parseDateRange(block, ref) ?? parseDateRange(withPrev, ref);
+    const date = range?.start ?? parseDate(block, ref) ?? parseDate(withPrev, ref);
     if (!date) continue;
-    if ((from && date < from) || (to && date > to)) continue;
+    const endDate = range && range.end !== range.start ? range.end : null;
+    // Keep events touching the window; skip very long ones (Christmas villages lasting months are not news).
+    if ((from && (endDate ?? date) < from) || (to && date > to)) continue;
+    if (endDate && (Date.parse(endDate) - Date.parse(date)) / 86400000 > maxDays) continue;
     const explicitDate = /\b\d{1,2}\s+(?:gen|feb|mar|apr|mag|giu|lug|ago|set|ott|nov|dic)|\b\d{1,2}[/.-]\d{1,2}/i.test(withPrev);
     const times = parseTimes(block);
     const g = parseFlyer(`${block} ${blocks[i + 1] ?? ""}`, ref);
     const kw = block.match(STRONG)?.[0] ?? "evento";
     const title = makeTitle(block, kw);
-    found.push({ title, date, startTime: times.start, endTime: times.end, text: block.slice(0, 260), guess: g, explicitDate });
+    const comune = findComune(block) ?? findComune(withPrev);
+    found.push({ title, date, endDate, startTime: times.start, endTime: times.end, text: block.slice(0, 260), guess: g, explicitDate, comune });
   }
   // One per (date, keyword): bulletins repeat announcements.
   const seen = new Set();

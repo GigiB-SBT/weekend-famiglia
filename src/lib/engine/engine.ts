@@ -15,6 +15,8 @@ const ADAPT_MARGIN = 2;
 const WEIGHTS = { age: 0.5, weather: 0.3, distance: 0.2 } as const;
 /** Dated events happen only this weekend: they outrank evergreen activities at equal fit. */
 const EVENT_BONUS = 0.12;
+/** Strongly seasonal outings (≤3 months, e.g. chestnut picking): worth proposing while they last. */
+const SEASON_BONUS = 0.08;
 
 const AGE_SCORE: Record<Compatibility, number> = {
   all_children: 1,
@@ -64,6 +66,11 @@ export function weatherScore(a: Activity, w: WeekendWeather): number {
 
 /** True when the activity is usable on the given weekend dates. */
 export function isAvailable(a: Activity, saturday: string | null, sunday: string | null): boolean {
+  if (a.seasonMonths && a.seasonMonths.length > 0) {
+    const days = [saturday, sunday].filter((d): d is string => Boolean(d));
+    const inSeason = days.length === 0 || days.some((d) => a.seasonMonths!.includes(Number(d.slice(5, 7))));
+    if (!inSeason) return false;
+  }
   const from = a.event ? a.event.date : a.availableFrom;
   const to = a.event ? (a.event.endDate ?? a.event.date) : a.availableTo;
   if (!from && !to) return true;
@@ -127,6 +134,9 @@ export function scoreActivities(
     if (a.event) {
       score += EVENT_BONUS;
       flags.push("evento");
+    } else if (a.seasonMonths && a.seasonMonths.length <= 3) {
+      score += SEASON_BONUS;
+      flags.push("stagionale");
     }
 
     scored.push({ activity: a, compatibility: compat, distanceKm, score: round(score), breakdown, flags });

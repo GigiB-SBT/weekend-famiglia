@@ -14,9 +14,9 @@ Mappatura con la tabella `families` (HANDOFF.md). `id` è generato dal database;
 | # | Domanda (testo esatto) | Tipo Tally | Opzioni / validazione | Obbl. | Campo `families` |
 |---|---|---|---|---|---|
 | 1 | La tua email (ci scrivo solo per il pilota) | Email | Formato email | Sì | `email` |
-| 2 | In che zona di Bologna abiti? | Scelta singola | Borgo Panigale-Reno / Navile / Porto-Saragozza / San Donato-San Vitale / Santo Stefano / Savena / Comune della provincia (specificare) | Sì | `zona` |
+| 2 | In che zona abiti? | Scelta singola | **Bologna:** Borgo Panigale-Reno / Navile / Porto-Saragozza / San Donato-San Vitale / Santo Stefano / Savena · **Riviera:** Grottammare / San Benedetto del Tronto / Cupra Marittima / Ripatransone / Acquaviva Picena / Monteprandone · Altro comune (specificare) | Sì | `zona` (l'area Bologna/Grottammare si ricava dalla zona) |
 | 2b | Quale comune? | Testo breve, condizionale (solo se alla 2 scegli "Comune della provincia") | Solo il nome del comune | Sì, se mostrata | `zona` (valore = nome comune) |
-| 3 | Fino a quanti km sei disposto a spostarti per l'uscita? | Scelta singola | 5 km / 10 km / 20 km / 30 km | Sì | `raggio_km` (intero) |
+| 3 | Fino a quanti km sei disposto a spostarti per l'uscita? | Scelta singola | 5 km / 10 km / 20 km / 30 km / 50 km (colli) / 80 km (gite in Appennino) | Sì | `raggio_km` (intero) |
 | 4 | Che età hanno i tuoi figli? Scrivi solo i numeri, separati da virgola (es. 5, 9, 11) | Testo breve (input numeri) | Numeri interi 0-17 separati da virgola. Hint: "Solo età in anni, niente nomi né date di nascita. Un bimbo di 8 mesi = 0." Regex di validazione: `^(1[0-7]\|[0-9])(\s*,\s*(1[0-7]\|[0-9]))*$` | Sì | `eta_figli` (array di interi) |
 | 5 | Budget indicativo per ogni uscita (per tutta la famiglia) | Scelta singola | Gratis / fino a 20 € / 20-50 € / oltre 50 € | Sì | `budget` |
 | 6 | Preferisci attività... | Scelta singola | Al chiuso / All'aperto / Indifferente | Sì | `indoor_outdoor` |

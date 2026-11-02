@@ -10,7 +10,19 @@
     ],
     "kidsOnly": false,
     "license": "CC BY-SA 4.0",
-    "attributionUrl": "https://www.culturabologna.it/objects/agenda"
+    "attributionUrl": "https://www.culturabologna.it/objects/agenda",
+    "area": "bologna"
+  },
+  {
+    "id": "sagr-it-bologna",
+    "name": "Sagre · provincia di Bologna (sagr.it)",
+    "type": "page",
+    "area": "bologna",
+    "url": "https://sagr.it/en/sagre/provincia/bologna",
+    "listing": true,
+    "geocode": true,
+    "maxPdfs": 0,
+    "note": "Solo fatti (nome, comune, date) e link alla fonte: nessun testo copiato."
   },
   {
     "id": "parrocchia-casteldebole",
@@ -21,7 +33,8 @@
     "lat": 44.497,
     "lng": 11.283,
     "address": "Parrocchia di Casteldebole, Bologna",
-    "maxPdfs": 0
+    "maxPdfs": 0,
+    "area": "bologna"
   },
   {
     "id": "parrocchia-casteldebole-foglietti",
@@ -33,7 +46,8 @@
     "lng": 11.283,
     "address": "Parrocchia di Casteldebole, Bologna",
     "maxPdfs": 2,
-    "pdfPattern": "foglietto|domenical"
+    "pdfPattern": "foglietto|domenical",
+    "area": "bologna"
   },
   {
     "id": "zp-borgo-panigale-news",
@@ -44,7 +58,8 @@
     "zone": "Borgo Panigale-Reno",
     "lat": 44.512,
     "lng": 11.27,
-    "address": "Borgo Panigale, Bologna"
+    "address": "Borgo Panigale, Bologna",
+    "area": "bologna"
   },
   {
     "id": "zp-barca-news",
@@ -55,7 +70,8 @@
     "zone": "Borgo Panigale-Reno",
     "lat": 44.488,
     "lng": 11.3,
-    "address": "Barca, Bologna"
+    "address": "Barca, Bologna",
+    "area": "bologna"
   },
   {
     "id": "zp-barca-newsletter",
@@ -65,7 +81,8 @@
     "zone": "Borgo Panigale-Reno",
     "lat": 44.488,
     "lng": 11.3,
-    "address": "Barca, Bologna"
+    "address": "Barca, Bologna",
+    "area": "bologna"
   },
   {
     "id": "zp-bertalia-news",
@@ -76,7 +93,8 @@
     "zone": "Navile",
     "lat": 44.518,
     "lng": 11.32,
-    "address": "Bertalia, Bologna"
+    "address": "Bertalia, Bologna",
+    "area": "bologna"
   },
   {
     "id": "zp-bolognina-news",
@@ -87,7 +105,8 @@
     "zone": "Navile",
     "lat": 44.512,
     "lng": 11.335,
-    "address": "Bolognina, Bologna"
+    "address": "Bolognina, Bologna",
+    "area": "bologna"
   },
   {
     "id": "zp-meloncello-news",
@@ -98,7 +117,8 @@
     "zone": "Porto-Saragozza",
     "lat": 44.483,
     "lng": 11.307,
-    "address": "Meloncello / Casalecchio"
+    "address": "Meloncello / Casalecchio",
+    "area": "bologna"
   },
   {
     "id": "zp-saffi-ravone-news",
@@ -109,7 +129,8 @@
     "zone": "Porto-Saragozza",
     "lat": 44.5,
     "lng": 11.315,
-    "address": "Saffi-Ravone, Bologna"
+    "address": "Saffi-Ravone, Bologna",
+    "area": "bologna"
   },
   {
     "id": "upcm-castel-maggiore",
@@ -121,7 +142,8 @@
     "zone": "Navile",
     "lat": 44.577,
     "lng": 11.36,
-    "address": "Castel Maggiore"
+    "address": "Castel Maggiore",
+    "area": "bologna"
   },
   {
     "id": "parrocchia-trebbo",
@@ -132,7 +154,8 @@
     "zone": "Navile",
     "lat": 44.556,
     "lng": 11.325,
-    "address": "Trebbo di Reno, Castel Maggiore"
+    "address": "Trebbo di Reno, Castel Maggiore",
+    "area": "bologna"
   },
   {
     "id": "zp-argelato",
@@ -144,7 +167,8 @@
     "zone": "Navile",
     "lat": 44.642,
     "lng": 11.348,
-    "address": "Argelato"
+    "address": "Argelato",
+    "area": "bologna"
   },
   {
     "id": "parrocchia-calderara",
@@ -154,7 +178,8 @@
     "zone": "Navile",
     "lat": 44.565,
     "lng": 11.272,
-    "address": "Calderara di Reno"
+    "address": "Calderara di Reno",
+    "area": "bologna"
   },
   {
     "id": "parrocchia-casalecchio-sgb",
@@ -164,7 +189,8 @@
     "zone": "Porto-Saragozza",
     "lat": 44.476,
     "lng": 11.276,
-    "address": "Casalecchio di Reno"
+    "address": "Casalecchio di Reno",
+    "area": "bologna"
   },
   {
     "id": "parrocchia-zola",
@@ -174,7 +200,8 @@
     "zone": "Borgo Panigale-Reno",
     "lat": 44.49,
     "lng": 11.218,
-    "address": "Zola Predosa"
+    "address": "Zola Predosa",
+    "area": "bologna"
   },
   {
     "id": "parrocchia-corpus-domini",
@@ -184,7 +211,8 @@
     "zone": "Savena",
     "lat": 44.483,
     "lng": 11.37,
-    "address": "Viale Enriques, Bologna"
+    "address": "Viale Enriques, Bologna",
+    "area": "bologna"
   },
   {
     "id": "parrocchia-anzola-avvisi",
@@ -194,7 +222,8 @@
     "zone": "Borgo Panigale-Reno",
     "lat": 44.547,
     "lng": 11.196,
-    "address": "Parrocchia di Anzola dell'Emilia"
+    "address": "Parrocchia di Anzola dell'Emilia",
+    "area": "bologna"
   },
   {
     "id": "parrocchia-anzola-eventi",
@@ -204,7 +233,8 @@
     "zone": "Borgo Panigale-Reno",
     "lat": 44.547,
     "lng": 11.196,
-    "address": "Parrocchia di Anzola dell'Emilia"
+    "address": "Parrocchia di Anzola dell'Emilia",
+    "area": "bologna"
   },
   {
     "id": "proloco-casalecchio",
@@ -214,7 +244,8 @@
     "zone": "Porto-Saragozza",
     "lat": 44.476,
     "lng": 11.276,
-    "address": "Casalecchio di Reno"
+    "address": "Casalecchio di Reno",
+    "area": "bologna"
   },
   {
     "id": "proloco-castel-maggiore",
@@ -224,7 +255,8 @@
     "zone": "Navile",
     "lat": 44.577,
     "lng": 11.36,
-    "address": "Castel Maggiore"
+    "address": "Castel Maggiore",
+    "area": "bologna"
   },
   {
     "id": "culturara-calderara",
@@ -234,7 +266,8 @@
     "zone": "Navile",
     "lat": 44.565,
     "lng": 11.272,
-    "address": "Calderara di Reno"
+    "address": "Calderara di Reno",
+    "area": "bologna"
   },
   {
     "id": "comune-zola-predosa",
@@ -244,7 +277,8 @@
     "zone": "Borgo Panigale-Reno",
     "lat": 44.49,
     "lng": 11.218,
-    "address": "Zola Predosa"
+    "address": "Zola Predosa",
+    "area": "bologna"
   },
   {
     "id": "turismo-pianura",
@@ -252,7 +286,8 @@
     "type": "page",
     "url": "https://turismoinpianura.cittametropolitana.bo.it/it/eventi-all",
     "zone": "Navile",
-    "address": "Pianura bolognese (luogo da verificare)"
+    "address": "Pianura bolognese (luogo da verificare)",
+    "area": "bologna"
   },
   {
     "id": "appennino-bolognese",
@@ -260,6 +295,102 @@
     "type": "page",
     "url": "https://appenninobolognese.cittametropolitana.bo.it/it/eventi-all",
     "zone": "Savena",
-    "address": "Appennino bolognese (luogo da verificare)"
+    "address": "Appennino bolognese (luogo da verificare)",
+    "area": "bologna",
+    "geocode": true,
+    "listing": true
+  },
+  {
+    "id": "turismo-sbt",
+    "name": "Turismo San Benedetto del Tronto · eventi",
+    "type": "page",
+    "area": "grottammare",
+    "url": "https://turismo.comunesbt.it/eventi",
+    "geocode": true,
+    "listing": true,
+    "maxPdfs": 0,
+    "zone": "San Benedetto del Tronto",
+    "lat": 42.954,
+    "lng": 13.881
+  },
+  {
+    "id": "diocesi-sbt",
+    "name": "Diocesi San Benedetto-Ripatransone-Montalto · notizie",
+    "type": "page",
+    "area": "grottammare",
+    "url": "https://www.diocesisbt.org/",
+    "geocode": true,
+    "maxPdfs": 0,
+    "zone": "San Benedetto del Tronto",
+    "lat": 42.954,
+    "lng": 13.881
+  },
+  {
+    "id": "sagr-it-ascoli",
+    "name": "Sagre · Ascoli e Sibillini (sagr.it)",
+    "type": "page",
+    "area": "grottammare",
+    "urlTemplate": "https://sagr.it/en/marche/ascoli-and-sibillini/{monthEn}-{year}",
+    "listing": true,
+    "geocode": true,
+    "maxPdfs": 0,
+    "note": "Solo fatti (nome, comune, date) e link alla fonte."
+  },
+  {
+    "id": "sagramap-ascoli",
+    "name": "Sagre · provincia di Ascoli Piceno (Sagramap)",
+    "type": "page",
+    "area": "grottammare",
+    "url": "https://sagramap.com/marche/ascoli-piceno",
+    "listing": true,
+    "geocode": true,
+    "maxPdfs": 0,
+    "note": "Solo fatti (nome, comune, date) e link alla fonte."
+  },
+  {
+    "id": "itinerarinelgusto-ascoli",
+    "name": "Sagre · Ascoli Piceno (Itinerari nel Gusto)",
+    "type": "page",
+    "area": "grottammare",
+    "urlTemplate": "https://www.itinerarinelgusto.it/sagre-e-feste/ascoli-piceno/{monthIt}",
+    "listing": true,
+    "geocode": true,
+    "maxPdfs": 0
+  },
+  {
+    "id": "cai-bologna-escursioni",
+    "name": "CAI Bologna · escursioni",
+    "type": "page",
+    "area": "bologna",
+    "url": "https://www.caibo.it/attivita/escursionismo/escursioni-corsi-eventi.html",
+    "geocode": true,
+    "maxPdfs": 1,
+    "zone": "Santo Stefano",
+    "lat": 44.4949,
+    "lng": 11.3426
+  },
+  {
+    "id": "cai-bologna-giovanile",
+    "name": "CAI Bologna · alpinismo giovanile",
+    "type": "page",
+    "area": "bologna",
+    "url": "https://www.caibo.it/attivita/alpinismo-giovanile.html",
+    "geocode": true,
+    "maxPdfs": 1,
+    "zone": "Santo Stefano",
+    "lat": 44.4949,
+    "lng": 11.3426
+  },
+  {
+    "id": "consulta-escursionismo",
+    "name": "Le colline fuori della porta · Consulta Escursionismo",
+    "type": "page",
+    "area": "bologna",
+    "url": "https://consultaescursionismotmbologna.it/",
+    "geocode": true,
+    "maxPdfs": 1,
+    "zone": "Santo Stefano",
+    "lat": 44.4949,
+    "lng": 11.3426
   }
 ]

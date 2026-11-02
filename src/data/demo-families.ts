@@ -36,4 +36,15 @@ export const DEMO_FAMILIES: Family[] = [
     preference: "indoor",
     interests: ["sport", "laboratorio"],
   },
+  {
+    id: "demo-gr-4-8-12",
+    email: "famiglia.d@example.com",
+    zone: "Grottammare",
+    ...ZONES.Grottammare,
+    radiusKm: 20,
+    childrenAges: [4, 8, 12],
+    budget: "upto20",
+    preference: "any",
+    interests: ["natura", "museo"],
+  },
 ];

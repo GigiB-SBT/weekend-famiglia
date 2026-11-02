@@ -22,7 +22,11 @@ const MONTHS: Record<string, number> = {
   gennaio: 1, febbraio: 2, marzo: 3, aprile: 4, maggio: 5, giugno: 6,
   luglio: 7, agosto: 8, settembre: 9, ottobre: 10, novembre: 11, dicembre: 12,
   gen: 1, feb: 2, mar: 3, apr: 4, mag: 5, giu: 6, lug: 7, ago: 8, set: 9, ott: 10, nov: 11, dic: 12,
+  // English month names (some aggregators publish English pages)
+  january: 1, february: 2, march: 3, april: 4, may: 5, june: 6, july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
 };
+const MONTH_RE =
+  "(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre|january|february|march|april|may|june|july|august|september|october|november|december|gen|feb|mar|apr|mag|giu|lug|ago|set|ott|nov|dic)\\.?";
 const WEEKDAYS: Record<string, number> = {
   domenica: 0, lunedi: 1, "lunedì": 1, martedi: 2, "martedì": 2, mercoledi: 3, "mercoledì": 3,
   giovedi: 4, "giovedì": 4, venerdi: 5, "venerdì": 5, sabato: 6,
@@ -64,7 +68,7 @@ function resolveDay(day: number, month: number, year: number | null, ref: Date):
 export function parseDate(text: string, ref: Date = new Date()): string | null {
   const t = text.toLowerCase();
   // 8 novembre (2026)
-  const m1 = t.match(/\b(\d{1,2})\s+(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre|gen|feb|mar|apr|mag|giu|lug|ago|set|ott|nov|dic)\.?(?:\s+(\d{4}))?\b/);
+  const m1 = t.match(new RegExp(`\\b(\\d{1,2})\\s+${MONTH_RE}(?:\\s+(\\d{4}))?\\b`));
   if (m1) return resolveDay(Number(m1[1]), MONTHS[m1[2]], m1[3] ? Number(m1[3]) : null, ref);
   // 8/11(/2026)  8.11  8-11
   const m2 = t.match(/\b(\d{1,2})[/.-](\d{1,2})(?:[/.-](\d{2,4}))?\b/);
@@ -86,6 +90,48 @@ export function parseDate(text: string, ref: Date = new Date()): string | null {
     return iso(d);
   }
   return null;
+}
+
+export interface DateRange {
+  start: string;
+  end: string;
+}
+
+/**
+ * Multi-day events: "dal 6 al 15 novembre", "7 e 8 novembre", "6-15 novembre 2026",
+ * "6 novembre – 15 novembre 2026", "15 novembre 2026 – 6 gennaio 2027", "Dal 31/10/2026 Al 01/11/2026".
+ * The end is resolved first (next occurrence), then the start in the same or previous year,
+ * so a sagra already running is not pushed to next year.
+ */
+export function parseDateRange(text: string, ref: Date = new Date()): DateRange | null {
+  const t = text.toLowerCase().replace(/\s+/g, " ");
+  const SEP = "\\s*(?:-|–|—|al|all'|e|fino al|to)\\s*";
+  let sd: number, sm: number, sy: number | null, ed: number, em: number, ey: number | null;
+
+  const full = t.match(new RegExp(`(?:dal\\s+)?(\\d{1,2})\\s+${MONTH_RE}(?:\\s+(\\d{4}))?${SEP}(\\d{1,2})\\s+${MONTH_RE}(?:\\s+(\\d{4}))?`));
+  const compact = t.match(new RegExp(`(?:dal\\s+)?(\\d{1,2})${SEP}(\\d{1,2})\\s+${MONTH_RE}(?:\\s+(\\d{4}))?`));
+  const numeric = t.match(/(?:dal\s+)?(\d{1,2})[/.](\d{1,2})(?:[/.](\d{2,4}))?\s*(?:-|–|al)\s*(\d{1,2})[/.](\d{1,2})(?:[/.](\d{2,4}))?/);
+  if (full) {
+    [sd, sm, sy, ed, em, ey] = [Number(full[1]), MONTHS[full[2]], full[3] ? Number(full[3]) : null, Number(full[4]), MONTHS[full[5]], full[6] ? Number(full[6]) : null];
+  } else if (compact) {
+    [sd, ed, em, ey] = [Number(compact[1]), Number(compact[2]), MONTHS[compact[3]], compact[4] ? Number(compact[4]) : null];
+    [sm, sy] = [em, null];
+  } else if (numeric) {
+    const y = (v?: string) => (v ? (v.length === 2 ? 2000 + Number(v) : Number(v)) : null);
+    [sd, sm, sy, ed, em, ey] = [Number(numeric[1]), Number(numeric[2]), y(numeric[3]), Number(numeric[4]), Number(numeric[5]), y(numeric[6])];
+  } else {
+    return null;
+  }
+  if (!sm || !em) return null;
+  // Resolve the end: given year, or next occurrence counting from the start of this month.
+  const refMonthStart = new Date(ref.getFullYear(), ref.getMonth(), 1);
+  const end = resolveDay(ed, em, ey ?? sy, ey ?? sy ? ref : refMonthStart);
+  if (!end) return null;
+  const endYear = Number(end.slice(0, 4));
+  const startYear = sy ?? (sm > em ? endYear - 1 : endYear);
+  const start = resolveDay(sd, sm, startYear, ref);
+  if (!start || start > end) return null;
+  return { start, end };
 }
 
 function normTime(h: string, m?: string) {

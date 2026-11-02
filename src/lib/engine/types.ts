@@ -40,6 +40,8 @@ export interface Activity {
   /** Optional validity window (ISO dates) — used by dated events. */
   availableFrom?: string | null;
   availableTo?: string | null;
+  /** Months (1-12) when the activity makes sense, e.g. chestnut picking [9,10,11]. Absent = all year. */
+  seasonMonths?: number[] | null;
   /** Present only for dated events (castagnata, spettacolo, laboratorio in biblioteca…). */
   event?: EventInfo | null;
 }

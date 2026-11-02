@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import seed from "@/data/seed-activities.json";
 import { DEMO_FAMILIES } from "@/data/demo-families";
-import { ZONE_NAMES, ZONES, type ZoneName } from "@/data/zones";
+import { AREA_IDS, AREAS, ZONES, areaOfZone, zonesOf, type AreaId, type ZoneName } from "@/data/zones";
 import { recommend } from "@/lib/engine/engine";
 import type {
   Activity,
@@ -36,7 +36,7 @@ const PREFS: { v: SettingPreference; l: string }[] = [
   { v: "outdoor", l: "Preferibilmente all'aperto" },
   { v: "indoor", l: "Preferibilmente al coperto" },
 ];
-const RADII = [5, 10, 20, 30];
+const RADII = [5, 10, 20, 30, 50, 80];
 const COST_LABEL = { free: "Gratis", low: "fino a 10 € a testa", mid: "10–25 € a testa", high: "oltre 25 € a testa" };
 
 type RainMode = "live" | "dry" | "rain";
@@ -44,6 +44,8 @@ type RainMode = "live" | "dry" | "rain";
 export function Demo() {
   const [ages, setAges] = useState<number[]>(BASE.childrenAges);
   const [zone, setZone] = useState<ZoneName>(BASE.zone as ZoneName);
+  const area: AreaId = areaOfZone(zone);
+  const [weatherByArea, setWeatherByArea] = useState<Partial<Record<AreaId, WeekendWeather>>>({});
   const [radiusKm, setRadiusKm] = useState(BASE.radiusKm);
   const [budget, setBudget] = useState<FamilyBudget>(BASE.budget);
   const [preference, setPreference] = useState<SettingPreference>(BASE.preference);
@@ -65,9 +67,23 @@ export function Demo() {
       const d = new Date();
       setToday(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
     });
-    getWeekendWeather().then((w) => alive && setLiveWeather(w));
     return () => { alive = false; };
   }, []);
+
+  // Weather for the selected area (fetched once per area).
+  useEffect(() => {
+    if (weatherByArea[area]) {
+      queueMicrotask(() => setLiveWeather(weatherByArea[area] ?? null));
+      return;
+    }
+    let alive = true;
+    getWeekendWeather({ lat: AREAS[area].lat, lng: AREAS[area].lng }).then((w) => {
+      if (!alive) return;
+      setWeatherByArea((m) => ({ ...m, [area]: w }));
+      setLiveWeather(w);
+    });
+    return () => { alive = false; };
+  }, [area, weatherByArea]);
 
   const weather: WeekendWeather | null = useMemo(() => {
     const w = liveWeather ?? placeholder;
@@ -126,7 +142,23 @@ export function Demo() {
     <div className="min-h-full">
       <header className="bg-shell text-on-shell">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-4 pt-4">
-          <h1 className="text-xl font-extrabold">Weekend in Famiglia</h1>
+          <div className="flex min-w-0 flex-col">
+            <h1 className="text-xl font-extrabold">Weekend in Famiglia</h1>
+            <label className="flex items-center gap-1 text-sm text-on-shell-2">
+              <span className="sr-only">Area</span>
+              <select
+                id="area"
+                value={area}
+                onChange={(e) => setZone(zonesOf(e.target.value as AreaId)[0])}
+                className="cursor-pointer appearance-none rounded-full bg-black/15 py-0.5 pl-2.5 pr-6 font-semibold text-on-shell"
+                style={{ backgroundImage: "linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%)", backgroundPosition: "calc(100% - 12px) 55%, calc(100% - 8px) 55%", backgroundSize: "4px 4px", backgroundRepeat: "no-repeat" }}
+              >
+                {AREA_IDS.map((a) => (
+                  <option key={a} value={a} className="text-ink">{AREAS[a].label}</option>
+                ))}
+              </select>
+            </label>
+          </div>
           <WeatherBadge w={weather} live={liveWeather} />
         </div>
         <nav aria-label="Sezioni" className="mx-auto flex max-w-2xl gap-1 px-4 pb-3 pt-3">
@@ -150,7 +182,7 @@ export function Demo() {
 
       {tab === "eventi" ? (
         <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6">
-          {today ? <EventsPanel store={store} onStore={updateStore} pending={pending} today={today} /> : <Skeleton />}
+          {today ? <EventsPanel store={store} onStore={updateStore} pending={pending} today={today} area={area} /> : <Skeleton />}
         </main>
       ) : (
       <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6">
@@ -190,7 +222,7 @@ export function Demo() {
             </summary>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <Select id="zone" label="Zona di partenza" value={zone} onChange={(v) => setZone(v as ZoneName)}
-                options={ZONE_NAMES.map((z) => ({ v: z, l: z }))} />
+                options={zonesOf(area).map((z) => ({ v: z, l: z }))} />
               <Select id="radius" label="Distanza massima" value={String(radiusKm)} onChange={(v) => setRadiusKm(Number(v))}
                 options={RADII.map((r) => ({ v: String(r), l: `${r} km` }))} />
               <Select id="budget" label="Budget per uscita" value={budget} onChange={(v) => setBudget(v as FamilyBudget)}

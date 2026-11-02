@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ZONE_NAMES, type ZoneName } from "@/data/zones";
+import { ZONES, zonesOf, type AreaId, type ZoneName } from "@/data/zones";
 import type { Activity, Category, CostBand, Setting } from "@/lib/engine/types";
 import { parseFlyer } from "@/lib/events/parse";
 import {
@@ -40,10 +40,10 @@ const SETTINGS: { v: Setting; l: string }[] = [
   { v: "mixed", l: "Entrambi" },
 ];
 
-function emptyForm(today: string): EventForm {
+function emptyForm(today: string, area: AreaId): EventForm {
   return {
     title: "", description: "", date: today, startTime: "", endTime: "", place: "",
-    zone: "Borgo Panigale-Reno", minAge: 0, maxAge: 17, costBand: "free", setting: "outdoor",
+    zone: zonesOf(area)[0], minAge: 0, maxAge: 17, costBand: "free", setting: "outdoor",
     category: "festa", sourceUrl: "", organizer: "",
   };
 }
@@ -53,11 +53,13 @@ export function EventsPanel({
   onStore,
   pending,
   today,
+  area,
 }: {
   store: EventStoreData;
   onStore: (s: EventStoreData) => void;
   pending: Activity[];
   today: string;
+  area: AreaId;
 }) {
   const [form, setForm] = useState<EventForm | null>(null);
   const [flyer, setFlyer] = useState("");
@@ -79,7 +81,7 @@ export function EventsPanel({
 
   function readFlyer() {
     const g = parseFlyer(flyer, new Date(`${today}T12:00:00`));
-    const base = form ?? emptyForm(today);
+    const base = form ?? emptyForm(today, area);
     setForm({
       ...base,
       title: g.title ?? base.title,
@@ -181,7 +183,7 @@ export function EventsPanel({
             </Field>
             <Field id="ev-zone" label="Zona (per la distanza)">
               <select id="ev-zone" value={form.zone} onChange={(e) => setForm({ ...form, zone: e.target.value as ZoneName })} className="field">
-                {ZONE_NAMES.map((z) => <option key={z}>{z}</option>)}
+                {zonesOf(ZONES[form.zone]?.area ?? area).map((z) => <option key={z}>{z}</option>)}
               </select>
             </Field>
             <Field id="ev-cat" label="Tipo">
@@ -222,7 +224,7 @@ export function EventsPanel({
           </button>
         </section>
       ) : (
-        <button onClick={() => setForm(emptyForm(today))} className="rounded-2xl border-2 border-dashed border-shell/40 bg-surface px-4 py-4 text-left transition-colors duration-150 hover:border-shell">
+        <button onClick={() => setForm(emptyForm(today, area))} className="rounded-2xl border-2 border-dashed border-shell/40 bg-surface px-4 py-4 text-left transition-colors duration-150 hover:border-shell">
           <span className="block font-display text-lg font-extrabold text-link">+ Aggiungi evento</span>
           <span className="block text-sm text-ink-2">Feste di parrocchia, volantini, messaggi WhatsApp: incolla il testo e lo compilo io.</span>
         </button>

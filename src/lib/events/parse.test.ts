@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseDate, parseFlyer, parseTimes } from "./parse";
+import { parseDate, parseDateRange, parseFlyer, parseTimes } from "./parse";
 
 // Sunday 1 Nov 2026
 const ref = new Date(2026, 10, 1, 16, 0);
@@ -18,6 +18,23 @@ describe("parseDate", () => {
   });
   it("does not mistake a time for a date", () => {
     expect(parseDate("ore 15.30", ref)).toBeNull();
+  });
+});
+
+describe("parseDateRange", () => {
+  it("reads Italian and English ranges", () => {
+    expect(parseDateRange("Sagra dal 6 al 15 novembre", ref)).toEqual({ start: "2026-11-06", end: "2026-11-15" });
+    expect(parseDateRange("7 e 8 novembre 2026", ref)).toEqual({ start: "2026-11-07", end: "2026-11-08" });
+    expect(parseDateRange("6 November – 15 November 2026", ref)).toEqual({ start: "2026-11-06", end: "2026-11-15" });
+    expect(parseDateRange("15 November – 6 January 2027", ref)).toEqual({ start: "2026-11-15", end: "2027-01-06" });
+    expect(parseDateRange("Dal 31/10/2026 Al 01/11/2026", ref)).toEqual({ start: "2026-10-31", end: "2026-11-01" });
+  });
+  it("keeps a running sagra in the current year", () => {
+    const mid = new Date(2026, 10, 10);
+    expect(parseDateRange("dal 6 al 15 novembre", mid)).toEqual({ start: "2026-11-06", end: "2026-11-15" });
+  });
+  it("returns null for a single date", () => {
+    expect(parseDateRange("domenica 8 novembre ore 16", ref)).toBeNull();
   });
 });
 

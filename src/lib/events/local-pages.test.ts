@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractEvents, findPdfLinks, htmlToText } from "../../../scripts/lib/local-pages.mjs";
+import { extractEvents, findComune, findPdfLinks, htmlToText } from "../../../scripts/lib/local-pages.mjs";
 
 const ref = new Date(2026, 10, 1);
 const bulletin = `PARROCCHIA DI CASTEL DEBOLE
@@ -40,6 +40,30 @@ Sabato 14 novembre Colletta Alimentare presso il Centro Commerciale di Casteldeb
     expect(findPdfLinks(html, "https://www.parrocchiacasteldebole.it/volantini.html")).toEqual([
       "https://www.parrocchiacasteldebole.it/volantini.html?download=656%3Afoglietto-domenicale-25-ottobre-2026",
     ]);
+  });
+  it("reads a sagre listing with town and date range after the title", () => {
+    const listing = `Upcoming events
+Festa di San Martino
+Casalecchio di Reno
+6 November – 15 November 2026
+Sagra dell'Anguilla e delle Rane
+Molinella
+14 November – 29 November 2026
+Natale a Porta Galliera
+Bologna
+15 November 2026 – 6 January 2027`;
+    const ev = extractEvents(listing, { ref, from: "2026-11-07", to: "2026-11-22", listing: true }) as {
+      title: string; date: string; endDate: string | null; comune: { name: string } | null;
+    }[];
+    expect(ev.map((e) => [e.title, e.date, e.endDate, e.comune?.name])).toEqual([
+      ["Festa di San Martino", "2026-11-06", "2026-11-15", "Casalecchio di Reno"],
+      ["Sagra dell'Anguilla e delle Rane", "2026-11-14", "2026-11-29", "Molinella"],
+    ]);
+  });
+  it("finds the most specific comune", () => {
+    expect(findComune("Sagra a San Lazzaro di Savena, vicino a Bologna")?.name).toBe("San Lazzaro di Savena");
+    expect(findComune("Festa del mare a Grottammare")?.area).toBe("grottammare");
+    expect(findComune("nessun luogo")).toBeNull();
   });
   it("converts html to text", () => {
     expect(htmlToText("<p>Domenica&nbsp;8 novembre</p><p>ore 15</p>")).toBe("Domenica 8 novembre\nore 15");
