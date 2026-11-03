@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { eventWhen, formToEvent, pendingCandidates, rejectCandidate, upsertEvent, type EventForm } from "./store";
+import { eventWhen, formToEvent, mergeCandidates, parseImportCode, pendingCandidates, rejectCandidate, upsertEvent, type EventForm } from "./store";
 import { isAvailable, recommend } from "@/lib/engine/engine";
 import type { Family, WeekendWeather } from "@/lib/engine/types";
 
@@ -57,5 +57,16 @@ describe("events", () => {
     store = upsertEvent({ events: [], rejected: [] }, { ...cand, status: "published" });
     expect(pendingCandidates([cand], store, "2026-11-01")).toHaveLength(0);
     expect(pendingCandidates([cand], { events: [], rejected: [] }, "2026-11-09")).toHaveLength(0);
+  });
+  it("imports the email code (even with the whole email pasted) and merges with the APK list", () => {
+    const code = JSON.stringify({ wf: 1, generatedAt: "2026-11-04T06:20:00Z", events: [{ slug: "loc-1", title: "Festa delle castagne", event: { date: "2026-11-08", origin: "agenda" }, lat: 44.497, lng: 11.283 }] });
+    const parsed = parseImportCode(`28 eventi da approvare\n## Codice eventi\n${code}\nDettagli`);
+    if ("error" in parsed) throw new Error(parsed.error);
+    expect(parsed.events[0].status).toBe("da_verificare");
+    expect(parsed.events[0].costBand).toBe("free");
+    const merged = mergeCandidates([{ ...ev, slug: "old" }], "2026-11-01T00:00:00Z", parsed);
+    expect(merged.map((m) => m.slug).sort()).toEqual(["loc-1", "old"]);
+    expect("error" in parseImportCode("ciao")).toBe(true);
+    expect("error" in parseImportCode('{"wf": 2}')).toBe(true);
   });
 });

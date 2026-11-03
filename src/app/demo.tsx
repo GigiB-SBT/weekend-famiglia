@@ -17,11 +17,24 @@ import { agesLabel, buildDraft } from "@/lib/mail/draft";
 import { buildHtml, KID_COLORS } from "@/lib/mail/html";
 import { fallbackWeather, getWeekendWeather } from "@/lib/weather/open-meteo";
 import candidatesJson from "@/data/event-candidates.json";
-import { eventWhen, loadStore, pendingCandidates, saveStore, type EventStoreData } from "@/lib/events/store";
+import candidatesMeta from "@/data/event-candidates-meta.json";
+import {
+  eventWhen,
+  loadImported,
+  loadStore,
+  mergeCandidates,
+  pendingCandidates,
+  saveImported,
+  saveStore,
+  type EventStoreData,
+  type ImportedCandidates,
+} from "@/lib/events/store";
 import { EventsPanel } from "./events-panel";
+import { hydrate } from "@/lib/persist";
 
 const ACTIVITIES = seed as Activity[];
 const CANDIDATES = candidatesJson as Activity[];
+const CANDIDATES_AT = (candidatesMeta as { generatedAt: string | null }).generatedAt;
 const MAX_CHILDREN = 8;
 const BASE = DEMO_FAMILIES[0];
 
@@ -55,6 +68,7 @@ export function Demo() {
   const [copied, setCopied] = useState(false);
   const [tab, setTab] = useState<"weekend" | "eventi">("weekend");
   const [store, setStore] = useState<EventStoreData>({ events: [], rejected: [] });
+  const [imported, setImported] = useState<ImportedCandidates>({ generatedAt: null, events: [] });
   const [today, setToday] = useState<string>("");
 
   useEffect(() => {
@@ -63,7 +77,12 @@ export function Demo() {
     queueMicrotask(() => {
       if (!alive) return;
       setPlaceholder(fallbackWeather());
-      setStore(loadStore());
+      // Restore saved events from durable storage (survives app updates), then read them.
+      void hydrate().finally(() => {
+        if (!alive) return;
+        setStore(loadStore());
+        setImported(loadImported());
+      });
       const d = new Date();
       setToday(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
     });
@@ -109,7 +128,14 @@ export function Demo() {
   );
 
   const catalogue = useMemo(() => [...ACTIVITIES, ...store.events.filter((e) => e.status === "published")], [store]);
-  const pending = useMemo(() => (today ? pendingCandidates(CANDIDATES, store, today) : []), [store, today]);
+  const candidates = useMemo(() => mergeCandidates(CANDIDATES, CANDIDATES_AT, imported), [imported]);
+  const updatedAt = [CANDIDATES_AT, imported.generatedAt].filter(Boolean).sort().pop() ?? null;
+  const pending = useMemo(() => (today ? pendingCandidates(candidates, store, today) : []), [candidates, store, today]);
+
+  function importCandidates(next: ImportedCandidates) {
+    setImported(next);
+    saveImported(next);
+  }
   const rec = useMemo(
     () => (weather ? recommend(family, catalogue, weather, { allowUnverified: true, now: new Date(weather.fetchedAt) }) : null),
     [family, weather, catalogue],
@@ -182,7 +208,7 @@ export function Demo() {
 
       {tab === "eventi" ? (
         <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6">
-          {today ? <EventsPanel store={store} onStore={updateStore} pending={pending} today={today} area={area} /> : <Skeleton />}
+          {today ? <EventsPanel store={store} onStore={updateStore} pending={pending} today={today} area={area} updatedAt={updatedAt} onImport={importCandidates} /> : <Skeleton />}
         </main>
       ) : (
       <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6">

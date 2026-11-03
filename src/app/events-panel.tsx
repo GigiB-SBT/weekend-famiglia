@@ -1,18 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ZONES, zonesOf, type AreaId, type ZoneName } from "@/data/zones";
+import { AREA_IDS, AREAS, ZONES, zonesOf, type AreaId, type ZoneName } from "@/data/zones";
+import { haversineKm } from "@/lib/engine/engine";
 import type { Activity, Category, CostBand, Setting } from "@/lib/engine/types";
 import { parseFlyer } from "@/lib/events/parse";
 import {
   eventToForm,
   eventWhen,
   formToEvent,
+  parseImportCode,
   rejectCandidate,
   removeEvent,
   upsertEvent,
   type EventForm,
   type EventStoreData,
+  type ImportedCandidates,
 } from "@/lib/events/store";
 import { disableReminders, enableReminders, reminderState, type ReminderState } from "@/lib/notify";
 
@@ -54,12 +57,16 @@ export function EventsPanel({
   pending,
   today,
   area,
+  updatedAt,
+  onImport,
 }: {
   store: EventStoreData;
   onStore: (s: EventStoreData) => void;
   pending: Activity[];
   today: string;
   area: AreaId;
+  updatedAt: string | null;
+  onImport: (v: ImportedCandidates) => void;
 }) {
   const [form, setForm] = useState<EventForm | null>(null);
   const [flyer, setFlyer] = useState("");
@@ -67,6 +74,31 @@ export function EventsPanel({
   const [rem, setRem] = useState<ReminderState>("unsupported");
   const [backup, setBackup] = useState("");
   const [backupNote, setBackupNote] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [importNote, setImportNote] = useState<string | null>(null);
+
+  function doImport() {
+    const r = parseImportCode(importText);
+    if ("error" in r) {
+      setImportNote(r.error);
+      return;
+    }
+    onImport(r);
+    setImportText("");
+    setImportOpen(false);
+    setImportNote(`Importati ${r.events.length} eventi. Li trovi qui sotto in «Da approvare».`);
+  }
+  async function pasteFromClipboard() {
+    try {
+      setImportText(await navigator.clipboard.readText());
+    } catch {
+      setImportNote("Non riesco a leggere gli appunti: tieni premuto nel riquadro e scegli Incolla.");
+    }
+  }
+  const updatedLabel = updatedAt
+    ? new Date(updatedAt).toLocaleString("it-IT", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+    : null;
 
   useEffect(() => {
     let alive = true;
@@ -74,8 +106,25 @@ export function EventsPanel({
     return () => { alive = false; };
   }, []);
 
+  // Zone filter: whole area (events closer to this area than to the other one), or within N km of a zone.
+  const [zoneFilter, setZoneFilter] = useState<ZoneName | "all">("all");
+  const [maxKm, setMaxKm] = useState(20);
+  const zoneSel = zoneFilter !== "all" && ZONES[zoneFilter]?.area === area ? zoneFilter : "all";
+  function inFilter(a: Activity): boolean {
+    if (a.lat == null || a.lng == null) return zoneSel === "all"; // no position: show only in "whole area"
+    const nearestArea = AREA_IDS.reduce((best, id) =>
+      haversineKm(a.lat!, a.lng!, AREAS[id].lat, AREAS[id].lng) < haversineKm(a.lat!, a.lng!, AREAS[best].lat, AREAS[best].lng) ? id : best,
+    );
+    if (nearestArea !== area) return false;
+    if (zoneSel === "all") return true;
+    return haversineKm(a.lat, a.lng, ZONES[zoneSel].lat, ZONES[zoneSel].lng) <= maxKm;
+  }
+  const pendingShown = pending.filter(inFilter);
+  const hiddenPending = pending.length - pendingShown.length;
+
   const upcoming = store.events
     .filter((e) => (e.event?.endDate ?? e.event?.date ?? "") >= today)
+    .filter(inFilter)
     .sort((a, b) => (a.event!.date + (a.event!.startTime ?? "")).localeCompare(b.event!.date + (b.event!.startTime ?? "")));
   const past = store.events.filter((e) => (e.event?.endDate ?? e.event?.date ?? "") < today);
 
@@ -230,12 +279,63 @@ export function EventsPanel({
         </button>
       )}
 
-      {pending.length > 0 && (
+      <section className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm">
+            <span className="font-semibold">Eventi online</span>{" "}
+            <span className="text-ink-2">{updatedLabel ? `aggiornati ${updatedLabel}` : "non ancora letti"}</span>
+          </p>
+          {!importOpen && (
+            <button onClick={() => { setImportOpen(true); setImportNote(null); }} className="rounded-full bg-shell px-3 py-1.5 text-sm font-semibold text-on-shell">
+              Importa eventi dalla mail
+            </button>
+          )}
+        </div>
+        {importOpen && (
+          <div className="flex flex-col gap-2">
+            <p className="text-xs text-ink-2">Nella mail del mercoledì, copia il riquadro «Codice eventi» con il pulsante copia e incollalo qui.</p>
+            <textarea id="import-code" aria-label="Codice eventi" rows={3} value={importText} onChange={(e) => setImportText(e.target.value)} className="field num text-xs" style={plain} />
+            <div className="flex flex-wrap gap-2">
+              <button onClick={pasteFromClipboard} className="rounded-full border border-line px-3 py-1.5 text-sm">Incolla</button>
+              <button onClick={doImport} disabled={!importText.trim()} className="rounded-full bg-shell px-3 py-1.5 text-sm font-semibold text-on-shell disabled:opacity-40">Importa</button>
+              <button onClick={() => setImportOpen(false)} className="rounded-full px-3 py-1.5 text-sm text-ink-2">Annulla</button>
+            </div>
+          </div>
+        )}
+        {importNote && <p className="text-xs text-ink-2">{importNote}</p>}
+      </section>
+
+      <section aria-label="Filtro zona" className="flex flex-wrap items-end gap-2">
+        <label htmlFor="ev-filter-zone" className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-ink-2">
+          Zona
+          <select id="ev-filter-zone" value={zoneSel} onChange={(e) => setZoneFilter(e.target.value as ZoneName | "all")} className="field">
+            <option value="all">Tutta l&apos;area di {AREAS[area].label}</option>
+            {zonesOf(area).map((z) => <option key={z} value={z}>{z}</option>)}
+          </select>
+        </label>
+        {zoneSel !== "all" && (
+          <label htmlFor="ev-filter-km" className="flex flex-col gap-1 text-xs text-ink-2">
+            Entro
+            <select id="ev-filter-km" value={maxKm} onChange={(e) => setMaxKm(Number(e.target.value))} className="field num">
+              {[5, 10, 20, 30, 50, 80].map((k) => <option key={k} value={k}>{k} km</option>)}
+            </select>
+          </label>
+        )}
+      </section>
+
+      {pendingShown.length === 0 && hiddenPending > 0 && (
+        <p className="text-xs text-ink-2">{hiddenPending} eventi da approvare sono fuori da questo filtro: scegli «Tutta l&apos;area» o un raggio più ampio.</p>
+      )}
+
+      {pendingShown.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-base font-extrabold">Da approvare <span className="num text-coral">· {pending.length}</span></h2>
-          <p className="text-xs text-ink-2">Trovati nelle agende online. Controlla data ed età prima di approvare.</p>
+          <h2 className="text-base font-extrabold">Da approvare <span className="num text-coral">· {pendingShown.length}</span></h2>
+          <p className="text-xs text-ink-2">
+            Trovati nelle agende online. Controlla data ed età prima di approvare.
+            {hiddenPending > 0 && ` Altri ${hiddenPending} fuori dal filtro.`}
+          </p>
           <ul className="flex flex-col gap-2">
-            {pending.map((c) => (
+            {pendingShown.map((c) => (
               <EventRow key={c.slug} a={c}>
                 <button onClick={() => onStore(upsertEvent(store, { ...c, status: "published" }))} className="rounded-full bg-shell px-3 py-1.5 text-sm font-semibold text-on-shell">Approva</button>
                 <button onClick={() => setForm({ ...eventToForm(c) })} className="rounded-full border border-line px-3 py-1.5 text-sm">Modifica</button>

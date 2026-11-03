@@ -55,6 +55,7 @@ A ogni push su `main` la GitHub Action `.github/workflows/android-apk.yml` costr
 - Scarica: tab **Actions** → ultima esecuzione di **Android APK** → sezione **Artifacts** → `weekend-famiglia-apk` (zip con `app-debug.apk`).
 - Installa sul telefono aprendo l'APK e consentendo "installa app sconosciute" per il browser o il file manager.
 - In locale: `npm run build:mobile && npx cap add android && npx cap sync android` (serve Android Studio / JDK 21).
+- Versione: ogni APK ha `versionCode` = numero del run GitHub (hook `capacitor:sync:after` → `scripts/android-version.mjs`), quindi si installa come aggiornamento.
 - Firma stabile: `signing/debug.keystore` (chiave di debug del progetto, installata in CI da `scripts/ci-signing.mjs`), così ogni nuovo APK si installa sopra il precedente senza perdere i dati.
 - Icona e splash: `assets/` (generati con `@capacitor/assets` in CI). La cartella `android/` è generata e non va committata.
 
@@ -62,7 +63,9 @@ A ogni push su `main` la GitHub Action `.github/workflows/android-apk.yml` costr
 
 - **Scheda Eventi** nell'app: coda *Da approvare* (eventi trovati online), *In programma*, **+ Aggiungi evento** con lettura del testo di volantini e messaggi WhatsApp (data, ora, tipo, costo, età).
 - Gli eventi approvati entrano nelle proposte del loro weekend con priorità sulle attività fisse e compaiono nella mail come "Solo questo weekend".
-- Gli eventi sono salvati sul telefono (localStorage): usare *Backup eventi* prima di reinstallare. In fase E2 passano su Supabase.
+- Gli eventi sono salvati sul telefono in modo durevole (`src/lib/persist.ts`: localStorage + Android Preferences): **aggiornare l'app li conserva**. Disinstallarla li cancella: prima usare *Backup eventi*. In fase E2 passano su Supabase.
+- **Importa eventi dalla mail**: la mail del mercoledì contiene un «Codice eventi»; incollato nella scheda Eventi aggiunge i nuovi candidati senza reinstallare l'APK. La scheda mostra «Eventi online aggiornati …».
+- **Filtro zona** nella scheda Eventi: tutta l'area oppure una zona con raggio 5-80 km.
 - **Lettura automatica**: `.github/workflows/eventi-settimanali.yml`, ogni mercoledì. Legge l'open data "Agenda Cultura" del Comune (`scripts/fetch-events.mjs`, fonti in `data/event-sources.json`), salva i candidati in `src/data/event-candidates.json`, apre una issue "N eventi da approvare" (GitHub la invia per email) e ricostruisce l'APK.
 - L'Agenda Cultura esclude sagre ed eventi religiosi. Per questo lo script controlla anche **fonti locali** (`type: "page"` in `data/event-sources.json`): siti di parrocchie (anche i PDF degli avvisi), Pro Loco, Comuni limitrofi. Cerca castagnate, feste, sagre, tombole, mercatini e spettacoli con una data (`scripts/lib/local-pages.mjs`). La mail settimanale mostra quali fonti hanno risposto.
 - **Aggiungere una fonte**: su GitHub apri `data/event-sources.json`, matita, copia un blocco `"type": "page"` e cambia `id`, `name`, `url`, `lat`/`lng`. Censimenti in `docs/FONTI_EVENTI.md`, `docs/FONTI_LOCALI.md` e `data/parrocchie-zona-censimento.json`. Per i siti delle zone pastorali (`*.chiesadibologna.it`) lo script apre anche gli ultimi articoli (`followLinks`).

@@ -315,12 +315,29 @@ const candidates = all
   .slice(0, MAX_CANDIDATES);
 
 writeFileSync(new URL("../src/data/event-candidates.json", import.meta.url), JSON.stringify(candidates, null, 2) + "\n");
+const generatedAt = new Date().toISOString();
+writeFileSync(
+  new URL("../src/data/event-candidates-meta.json", import.meta.url),
+  JSON.stringify({ generatedAt, count: candidates.length, from, to }, null, 2) + "\n",
+);
+
+// "Codice eventi" for the email: the app imports it without reinstalling the APK.
+const DROP = new Set(["multiAgeNote", "openingNote", "isDemo"]);
+const compact = candidates.slice(0, 60).map((c) => {
+  const o = {};
+  for (const [k, v] of Object.entries(c)) {
+    if (DROP.has(k) || v === null || v === "") continue;
+    o[k] = k === "description" ? String(v).slice(0, 160) : v;
+  }
+  return o;
+});
+const importCode = JSON.stringify({ wf: 1, generatedAt, from, to, events: compact });
 
 const lines = [
   `# ${candidates.length} eventi da approvare (${from} → ${to})`,
   "",
   candidates.length
-    ? "Aprili nell'app (scheda **Eventi**, sezione *Da approvare*) dopo aver installato l'APK di questa settimana da **Releases**."
+    ? "Per vederli nell'app: copia il **codice eventi** in fondo (pulsante copia nell'angolo del riquadro), poi nell'app **Eventi → Importa eventi dalla mail → Incolla**. Non serve reinstallare l'APK."
     : "Nessun evento per bambini trovato nelle agende online per le prossime due settimane.",
   "",
   ...candidates.slice(0, 40).map((c) => `- **${c.event.date}${c.event.startTime ? ` ${c.event.startTime}` : ""}** · ${c.title} · ${c.address || c.zone}${c.sourceUrl ? ` · [fonte](${c.sourceUrl})` : ""}`),
@@ -329,6 +346,12 @@ const lines = [
   ...sourceStatus.map((x) => `- ${x.ok ? "✅" : "⚠️"} ${x.name}: ${x.ok ? `${x.n} eventi` : "non raggiungibile"}`),
   "",
   "Le feste che non sono online (volantini, WhatsApp, Facebook) aggiungile con **+ Aggiungi evento**. Per aggiungere una parrocchia o una Pro Loco da controllare ogni settimana, modifica `data/event-sources.json`.",
+  "",
+  "## Codice eventi",
+  "",
+  "```",
+  importCode,
+  "```",
   "",
   "<details><summary>Dettagli tecnici</summary>",
   "",
