@@ -1,6 +1,6 @@
 [
   {
-    "slug": "loc-2026-11-02-sagramap-ascoli-provincia-sagre-ad-ascoli-piceno",
+    "slug": "loc-2026-11-03-sagramap-ascoli-provincia-sagre-ad-ascoli-piceno",
     "title": "Provincia Sagre ad Ascoli Piceno",
     "category": "festa",
     "description": "Provincia Sagre ad Ascoli Piceno",
@@ -22,7 +22,7 @@
     "status": "da_verificare",
     "isDemo": false,
     "event": {
-      "date": "2026-11-02",
+      "date": "2026-11-03",
       "endDate": null,
       "startTime": null,
       "endTime": null,
@@ -123,38 +123,6 @@
       "startTime": null,
       "endTime": null,
       "organizer": "Appennino Bolognese · Città metropolitana",
-      "origin": "agenda",
-      "approxPosition": true
-    }
-  },
-  {
-    "slug": "loc-2026-11-07-sagr-it-ascoli-polentata-al-castello-calendar-today-7-novemb",
-    "title": "Polentata al Castello calendar_today 7 November – 15 November 2026 location_on Monte Urano",
-    "category": "festa",
-    "description": "Polentata al Castello calendar_today 7 November – 15 November 2026 location_on Monte Urano",
-    "minAge": 0,
-    "maxAge": 17,
-    "multiAgeNote": "",
-    "setting": "mixed",
-    "weatherFit": "any",
-    "costBand": "free",
-    "priceNote": "costo da verificare",
-    "durationMin": null,
-    "bookingRequired": null,
-    "address": "Fermo",
-    "zone": "Fermo",
-    "lat": 43.16,
-    "lng": 13.718,
-    "openingNote": "",
-    "sourceUrl": "https://sagr.it/en/marche/ascoli-and-sibillini/november-2026",
-    "status": "da_verificare",
-    "isDemo": false,
-    "event": {
-      "date": "2026-11-07",
-      "endDate": "2026-11-15",
-      "startTime": null,
-      "endTime": null,
-      "organizer": "Sagre · Ascoli e Sibillini (sagr.it) · novembre",
       "origin": "agenda",
       "approxPosition": true
     }
