@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractEvents, findComune, findPdfLinks, htmlToText } from "../../../scripts/lib/local-pages.mjs";
+import { extractEvents, extractVenueEvents, findComune, findPdfLinks, htmlToText } from "../../../scripts/lib/local-pages.mjs";
 
 const ref = new Date(2026, 10, 1);
 const bulletin = `PARROCCHIA DI CASTEL DEBOLE
@@ -64,6 +64,40 @@ Bologna
     expect(findComune("Sagra a San Lazzaro di Savena, vicino a Bologna")?.name).toBe("San Lazzaro di Savena");
     expect(findComune("Festa del mare a Grottammare")?.area).toBe("grottammare");
     expect(findComune("nessun luogo")).toBeNull();
+  });
+  it("reads a club programme: any dated item, title next to the date", () => {
+    const page = `PROGRAMMA
+Aperti il venerdì e il sabato
+Ven 06 Nov
+COSMO live
+Porte ore 21:30
+Biglietti
+Sab 07 Nov — Disco Inferno Party
+14/11 ore 23
+Marta Salogni dj set
+Sab 31 Gen
+Concerto lontano`;
+    const ev = extractVenueEvents(page, { ref, from: "2026-11-05", to: "2026-11-20" }) as { title: string; date: string; startTime: string | null }[];
+    expect(ev.map((e) => [e.title, e.date, e.startTime])).toEqual([
+      ["COSMO live", "2026-11-06", "21:30"],
+      ["Disco Inferno Party", "2026-11-07", null],
+      ["Marta Salogni dj set", "2026-11-14", "23:00"],
+    ]);
+  });
+  it("handles title-before-date pages and names like Marracash", () => {
+    const page = `Programmazione
+Marracash in concerto
+6 novembre 2026 H 21:00
+Disco Inferno Party
+7 novembre 2026 H 23:45
+Leggi anche`;
+    const ev = extractVenueEvents(page, { ref, from: "2026-11-05", to: "2026-11-20" }) as { title: string; date: string; startTime: string | null }[];
+    expect(ev.map((e) => [e.title, e.date, e.startTime])).toEqual([
+      ["Marracash in concerto", "2026-11-06", "21:00"],
+      ["Disco Inferno Party", "2026-11-07", "23:45"],
+    ]);
+    const inline = extractVenueEvents("Marracash in concerto 6 novembre 2026 H 21:00", { ref, from: "2026-11-05", to: "2026-11-20" }) as { title: string }[];
+    expect(inline[0].title).toBe("Marracash in concerto");
   });
   it("converts html to text", () => {
     expect(htmlToText("<p>Domenica&nbsp;8 novembre</p><p>ore 15</p>")).toBe("Domenica 8 novembre\nore 15");

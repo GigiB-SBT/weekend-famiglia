@@ -66,6 +66,9 @@ describe("events", () => {
     expect(parsed.events[0].costBand).toBe("free");
     const merged = mergeCandidates([{ ...ev, slug: "old" }], "2026-11-01T00:00:00Z", parsed);
     expect(merged.map((m) => m.slug).sort()).toEqual(["loc-1", "old"]);
+    const withAdults = parseImportCode(JSON.stringify({ wf: 1, generatedAt: "x", events: [], adults: [["ag-1", "Concerto jazz", "musica", "2026-11-07", null, "21:00", null, "Cantina Bentivoglio", 44.5, 11.35, "https://e.org", "low"]] }));
+    if ("error" in withAdults) throw new Error(withAdults.error);
+    expect(withAdults.adults?.[0]).toMatchObject({ title: "Concerto jazz", audience: "adulti", event: { startTime: "21:00" } });
     expect("error" in parseImportCode("ciao")).toBe(true);
     expect("error" in parseImportCode('{"wf": 2}')).toBe(true);
   });

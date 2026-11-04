@@ -5,7 +5,7 @@
 // The Agenda excludes sagre and religious events: parishes are added by hand in the app.
 import { readFileSync, writeFileSync, appendFileSync } from "node:fs";
 import { parseFlyer } from "../src/lib/events/parse.ts";
-import { extractEvents, fetchText, findPdfLinks, htmlToText, pdfToText } from "./lib/local-pages.mjs";
+import { extractEvents, extractVenueEvents, fetchText, findPdfLinks, htmlToText, pdfToText } from "./lib/local-pages.mjs";
 
 const SOURCES = JSON.parse(readFileSync(process.env.EVENTS_SOURCES ?? new URL("../data/event-sources.json", import.meta.url), "utf8"));
 const ZONES = {
@@ -18,6 +18,20 @@ const ZONES = {
 };
 const WINDOW_DAYS = 16;
 const MAX_CANDIDATES = 80;
+const MAX_ADULTS = 100;
+
+// Adults section: category from the text (culture, music & shows, food, parties, talks).
+function adultCategory(text) {
+  const t = text.toLowerCase();
+  if (/dj ?set|\bdj\b|clubbing|club night|discoteca|disco |party|serata|after ?hour|techno|house music|karaoke|open bar/.test(t)) return "notte";
+  if (/degustaz|vino|vini|wine|cantina|birra|aperitiv|cena |cene |food|enogastronom|mercato contadino|street food|cioccolat|tartuf|olio|chef|cucina/.test(t)) return "gusto";
+  if (/sagra|fiera|festa|carneval|mercatin/.test(t)) return "festa";
+  if (/concert|musica|jazz|blues|\brock\b|\bpop\b|\bindie\b|\brap\b|hip.?hop|\bmetal\b|\bpunk\b|\bfolk\b|cantautor|orchestra|sinfoni|filarmonic|quartetto|\btrio\b|\blive\b|\bband\b|\bcoro\b|opera lirica|recital|tour 20\d\d|in concerto|unplugged|acustico/.test(t)) return "musica";
+  if (/teatro|spettacol|danza|balletto|commedia|cabaret|stand.?up|musical|circo|cinema|film|proiezion|rassegna/.test(t)) return "spettacolo";
+  if (/mostra|museo|esposizion|visita guidata|pinacoteca|galleria|archeolog|arte /.test(t)) return "museo";
+  if (/passeggiat|escursion|trekking|camminat|bici/.test(t)) return "natura";
+  return "incontro";
+}
 // Explicit signals that an event is FOR children (generic words like "laboratorio" or "ragazzi" alone are not enough).
 const KIDS = /bambin|per (?:i )?ragazz|ragazze e ragazzi|bimb|famigli|piccol[ie]|infanzia|0-18|zerodiciotto|under\s?1[0-6]|\bkids\b|letture animate|lettura animata|burattin|marionett|teatro ragazzi|teatro per ragazzi|nati per leggere|nati per la musica|\b(?:dai|da|dagli)\s?\d{1,2}\s?(?:ai|a)\s?\d{1,2}\s?anni|\bdai\s?\d{1,2}\s?anni|\b\d{1,2}\s?[-–]\s?\d{1,2}\s?anni|scuol[ae] (?:dell'infanzia|primari)/i;
 // Events ABOUT children (talks, conferences) are not FOR children unless they say so explicitly.
@@ -117,8 +131,8 @@ function toCandidate(rec, source) {
   const url = asText(pick(rec, [/^url$|link|permalink|sito|web/i])?.value).trim();
   const free = asText(pick(rec, [/ingresso|prezzo|costo|price|biglietto|ticket/i])?.value);
   const text = `${asText(title.value)}\n${desc}\n${cats}\n${free}`;
-  if (!source.kidsOnly && (!KIDS.test(text) || ADULTS.test(text))) return { skip: "non per bambini" };
-  if (!source.kidsOnly && TALK.test(text) && !STRONG_KIDS.test(text)) return { skip: "incontro sui bambini, non per bambini" };
+  const forKids =
+    source.kidsOnly || (KIDS.test(text) && !ADULTS.test(text) && !(TALK.test(text) && !STRONG_KIDS.test(text)));
 
   const g = parseFlyer(text, today);
   const pos = geo(rec);
@@ -132,13 +146,14 @@ function toCandidate(rec, source) {
   }
   const [lat, lng] = pos ?? ZONES[zone];
   const t = asText(title.value).trim();
-  const minAge = g.minAge ?? 3;
-  const maxAge = g.maxAge ?? 12;
+  const minAge = forKids ? g.minAge ?? 3 : 0;
+  const maxAge = forKids ? g.maxAge ?? 12 : 17;
   return {
-    candidate: {
+    [forKids ? "candidate" : "adult"]: {
       slug: `ag-${startDay}-${slugify(t) || "evento"}`,
       title: t.slice(0, 120),
-      category: g.category ?? "laboratorio",
+      category: forKids ? g.category ?? "laboratorio" : adultCategory(text),
+      audience: forKids ? "famiglie" : "adulti",
       description: desc.slice(0, 260),
       minAge, maxAge,
       multiAgeNote: "",
@@ -231,7 +246,10 @@ async function readPage(source) {
   }
   let n = 0;
   for (const { url, text } of texts) {
-    for (const ev of extractEvents(text, { ref: today, from, to, listing: Boolean(source.listing) })) {
+    const found = source.mode === "venue"
+      ? extractVenueEvents(text, { ref: today, from, to })
+      : extractEvents(text, { ref: today, from, to, listing: Boolean(source.listing) });
+    for (const ev of found) {
       // Aggregators list many towns: use the comune named in the text when the source asks for it.
       const where = source.geocode && ev.comune ? ev.comune : null;
       if (source.geocode && !where) continue; // can't place it: skip rather than guess
@@ -242,7 +260,12 @@ async function readPage(source) {
       out.push({
         slug: `loc-${ev.date}-${slugify(`${source.id}-${ev.title}`)}`,
         title: ev.title,
-        category: g.category ?? "festa",
+        category:
+          source.category ??
+          (source.audience === "adulti"
+            ? ((c) => (c === "incontro" && source.categoryDefault ? source.categoryDefault : c))(adultCategory(ev.text))
+            : g.category ?? "festa"),
+        audience: source.audience ?? "tutti",
         description: ev.text,
         minAge: g.minAge ?? 0,
         maxAge: g.maxAge ?? 17,
@@ -278,6 +301,7 @@ async function readPage(source) {
 }
 
 const all = [];
+const adultsAll = [];
 const skipped = {};
 // Monthly pages (sagre sites): one URL per month touched by the window.
 const MONTHS_IT = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
@@ -296,7 +320,7 @@ function expand(source) {
   });
 }
 for (const source of SOURCES.filter((s) => s.type === "page" && s.enabled !== false).flatMap(expand)) {
-  all.push(...(await readPage(source)));
+  for (const ev of await readPage(source)) (ev.audience === "adulti" ? adultsAll : all).push(ev);
 }
 for (const source of SOURCES) {
   if (source.type !== "opendatasoft") continue;
@@ -304,6 +328,7 @@ for (const source of SOURCES) {
   for (const r of rows) {
     const out = toCandidate(r, source);
     if (out.candidate) all.push(out.candidate);
+    else if (out.adult) adultsAll.push(out.adult);
     else skipped[out.skip] = (skipped[out.skip] ?? 0) + 1;
   }
 }
@@ -315,10 +340,18 @@ const candidates = all
   .slice(0, MAX_CANDIDATES);
 
 writeFileSync(new URL("../src/data/event-candidates.json", import.meta.url), JSON.stringify(candidates, null, 2) + "\n");
+
+const seenAdults = new Set();
+const adults = adultsAll
+  .filter((c) => (seenAdults.has(c.slug) ? false : (seenAdults.add(c.slug), true)))
+  .sort((a, b) => (a.event.date + (a.event.startTime ?? "")).localeCompare(b.event.date + (b.event.startTime ?? "")))
+  .slice(0, MAX_ADULTS);
+writeFileSync(new URL("../src/data/event-adults.json", import.meta.url), JSON.stringify(adults, null, 2) + "\n");
+log(`- adulti: ${adults.length} eventi (cultura, musica, gusto, feste)`);
 const generatedAt = new Date().toISOString();
 writeFileSync(
   new URL("../src/data/event-candidates-meta.json", import.meta.url),
-  JSON.stringify({ generatedAt, count: candidates.length, from, to }, null, 2) + "\n",
+  JSON.stringify({ generatedAt, count: candidates.length, adults: adults.length, from, to }, null, 2) + "\n",
 );
 
 // "Codice eventi" for the email: the app imports it without reinstalling the APK.
@@ -331,10 +364,22 @@ const compact = candidates.slice(0, 60).map((c) => {
   }
   return o;
 });
-const importCode = JSON.stringify({ wf: 1, generatedAt, from, to, events: compact });
+// Adults as compact tuples: [slug, title, category, date, endDate, start, end, place, lat, lng, url, costBand]
+const r4 = (n) => (n == null ? null : Math.round(n * 1e4) / 1e4);
+let adultTuples = adults.map((a) => [
+  a.slug, a.title.slice(0, 90), a.category, a.event.date, a.event.endDate, a.event.startTime, a.event.endTime,
+  (a.address || "").slice(0, 60), r4(a.lat), r4(a.lng), a.sourceUrl, a.costBand,
+]);
+let importCode = JSON.stringify({ wf: 1, generatedAt, from, to, events: compact, adults: adultTuples });
+while (importCode.length > 52000 && adultTuples.length > 0) {
+  adultTuples = adultTuples.slice(0, Math.floor(adultTuples.length * 0.8));
+  importCode = JSON.stringify({ wf: 1, generatedAt, from, to, events: compact, adults: adultTuples });
+}
 
 const lines = [
   `# ${candidates.length} eventi da approvare (${from} → ${to})`,
+  "",
+  `Sezione adulti: ${adults.length} eventi tra cultura, musica, gusto e feste (nessuna approvazione richiesta).`,
   "",
   candidates.length
     ? "Per vederli nell'app: copia il **codice eventi** in fondo (pulsante copia nell'angolo del riquadro), poi nell'app **Eventi → Importa eventi dalla mail → Incolla**. Non serve reinstallare l'APK."

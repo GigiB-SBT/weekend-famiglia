@@ -30,6 +30,10 @@ const CATEGORIES: { v: Category; l: string }[] = [
   { v: "scienza", l: "Scienza" },
   { v: "fattoria", l: "Animali" },
   { v: "gita", l: "Gita" },
+  { v: "musica", l: "Concerto / musica" },
+  { v: "gusto", l: "Gusto / degustazione" },
+  { v: "incontro", l: "Incontro / cultura" },
+  { v: "notte", l: "Serata / club / dj set" },
 ];
 const COSTS: { v: CostBand; l: string }[] = [
   { v: "free", l: "Gratis / offerta libera" },
@@ -139,6 +143,7 @@ export function EventsPanel({
       startTime: g.startTime ?? base.startTime,
       endTime: g.endTime ?? base.endTime,
       category: g.category ?? base.category,
+      audience: g.category === "festa" ? "tutti" : base.audience,
       costBand: g.costBand ?? base.costBand,
       setting: g.setting ?? base.setting,
       minAge: g.minAge ?? base.minAge,
@@ -238,6 +243,13 @@ export function EventsPanel({
             <Field id="ev-cat" label="Tipo">
               <select id="ev-cat" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as Category })} className="field">
                 {CATEGORIES.map((c) => <option key={c.v} value={c.v}>{c.l}</option>)}
+              </select>
+            </Field>
+            <Field id="ev-aud" label="Per chi">
+              <select id="ev-aud" value={form.audience ?? "famiglie"} onChange={(e) => setForm({ ...form, audience: e.target.value as EventForm["audience"] })} className="field">
+                <option value="famiglie">Famiglie con bambini</option>
+                <option value="tutti">Tutti (anche adulti)</option>
+                <option value="adulti">Solo adulti</option>
               </select>
             </Field>
             <Field id="ev-cost" label="Costo">

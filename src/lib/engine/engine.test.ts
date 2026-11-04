@@ -87,6 +87,15 @@ describe("hard filters", () => {
   });
 });
 
+describe("audience", () => {
+  it("adults-only events never appear in family proposals", () => {
+    const concert = act({ slug: "jazz", audience: "adulti" });
+    const sagra = act({ slug: "sagra", audience: "tutti", category: "festa" });
+    const slugs = scoreActivities(family, [concert, sagra], dry).scored.map((s) => s.activity.slug);
+    expect(slugs).toEqual(["sagra"]);
+  });
+});
+
 describe("seasonal activities", () => {
   it("chestnut picking only in autumn", () => {
     const chestnuts = act({ slug: "castagne", category: "fattoria", setting: "outdoor", seasonMonths: [9, 10, 11] });

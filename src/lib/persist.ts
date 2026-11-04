@@ -8,7 +8,7 @@
  * Uninstalling the app still deletes everything: use "Backup eventi" first.
  */
 
-export const PERSISTED_KEYS = ["wf.events.v1", "wf.events.rejected.v1", "wf.events.imported.v1"] as const;
+export const PERSISTED_KEYS = ["wf.events.v1", "wf.events.rejected.v1", "wf.events.imported.v1", "wf.adults.saved.v1", "wf.places.fav.v1", "wf.places.history.v1"] as const;
 
 type Prefs = typeof import("@capacitor/preferences").Preferences;
 let prefsPromise: Promise<Prefs | null> | null = null;

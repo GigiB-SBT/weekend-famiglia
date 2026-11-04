@@ -170,3 +170,60 @@ function makeTitle(block, kw) {
   if (t.length > 90) t = `${t.slice(0, 87).replace(/\s+\S*$/, "")}…`;
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
+
+const EXPLICIT_DATE = /\b\d{1,2}\s+(?:gen|feb|mar|apr|mag|giu|lug|ago|set|ott|nov|dic|jan|may|jun|jul|aug|sep|oct|dec)[a-z]*\.?\b|\b\d{1,2}[/.]\d{1,2}(?:[/.]\d{2,4})?\b/i;
+const WEEKDAY_WORD = /\b(?:luned[iì]|marted[iì]|mercoled[iì]|gioved[iì]|venerd[iì]|sabato|domenica|lun|mar|mer|gio|ven|sab|dom|monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun)\b\.?/gi;
+const NOT_TITLE = /^(?:biglietti|tickets?|info|acquista|compra|sold ?out|dettagli|leggi|scopri|prenota|ingresso|apertura porte|porte|ore \d|h \d|dalle|free entry|gratuito|euro|€|\d+[,.]?\d*\s?€)/i;
+
+/**
+ * Venue / nightlife programme pages: every dated item is an event, whatever its title.
+ * The date sits in one line, the title in the line just after or before it.
+ * Only explicit dates count ("Ven 13 Nov", "13/11"), not bare weekdays ("aperti il venerdì").
+ * @param {string} text
+ * @param {{ ref?: Date, from?: string, to?: string }} [opts]
+ */
+export function extractVenueEvents(text, opts = {}) {
+  const { ref = new Date(), from, to } = opts;
+  const blocks = text.split(/\n+/).map((b) => b.replace(/\s+/g, " ").trim()).filter((b) => b.length > 1 && b.length < 300);
+  const isTitle = (b) => b && b.length >= 3 && b.length <= 110 && !EXPLICIT_DATE.test(b) && !NOT_TITLE.test(b);
+  const out = [];
+  const seen = new Set();
+  const restOf = (b) => b.replace(EXPLICIT_DATE, "").replace(WEEKDAY_WORD, "").replace(/\b20\d{2}\b/g, "").replace(/\b(?:ore|h)\s*\d{1,2}[:.]?\d{0,2}/gi, "").replace(/[|·•\-–—,]+/g, " ").trim();
+  // Page layout: is the title written before or after the date? Vote on unambiguous items.
+  let before = 0;
+  let after = 0;
+  blocks.forEach((b, i) => {
+    if (!EXPLICIT_DATE.test(b) || restOf(b).length >= 4) return;
+    const p = isTitle(blocks[i - 1]);
+    const n = isTitle(blocks[i + 1]);
+    if (p && !n) before++;
+    if (n && !p) after++;
+  });
+  const titleFirst = before > after;
+  for (let i = 0; i < blocks.length; i++) {
+    const b = blocks[i];
+    if (!EXPLICIT_DATE.test(b)) continue;
+    const range = parseDateRange(b, ref);
+    const date = range?.start ?? parseDate(b, ref);
+    if (!date) continue;
+    const end = range && range.end !== range.start ? range.end : null;
+    if ((from && (end ?? date) < from) || (to && date > to)) continue;
+    // Title: text on the same line besides the date, else the next line, else the previous one.
+    const sameLine = restOf(b);
+    const [first, second] = titleFirst ? [blocks[i - 1], blocks[i + 1]] : [blocks[i + 1], blocks[i - 1]];
+    const title = sameLine.length >= 4 && isTitle(sameLine) ? sameLine : isTitle(first) ? first : isTitle(second) ? second : null;
+    if (!title) continue;
+    const k = `${date}|${title.toLowerCase()}`;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    // Time: from the date line; if the title is on the next line, also the line after it (never from another dated item).
+    const titleNext = title === blocks[i + 1];
+    const after = titleNext && blocks[i + 2] && !EXPLICIT_DATE.test(blocks[i + 2]) ? blocks[i + 2] : "";
+    let times = parseTimes(b);
+    if (!times.start) times = parseTimes(`${titleNext ? title : ""} ${after}`);
+    const g = parseFlyer(`${title} ${b} ${blocks[i + 1] ?? ""}`, ref);
+    out.push({ title, date, endDate: end, startTime: times.start, endTime: times.end, text: `${title} · ${b}`.slice(0, 200), guess: g, explicitDate: true, comune: findComune(`${b} ${blocks[i + 1] ?? ""} ${blocks[i + 2] ?? ""}`) });
+  }
+  return out;
+}
+

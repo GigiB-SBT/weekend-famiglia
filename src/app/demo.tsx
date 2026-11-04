@@ -18,6 +18,7 @@ import { buildHtml, KID_COLORS } from "@/lib/mail/html";
 import { fallbackWeather, getWeekendWeather } from "@/lib/weather/open-meteo";
 import candidatesJson from "@/data/event-candidates.json";
 import candidatesMeta from "@/data/event-candidates-meta.json";
+import adultsJson from "@/data/event-adults.json";
 import {
   eventWhen,
   loadImported,
@@ -30,11 +31,14 @@ import {
   type ImportedCandidates,
 } from "@/lib/events/store";
 import { EventsPanel } from "./events-panel";
+import { AdultsPanel } from "./adults-panel";
+import { ExplorePanel } from "./explore-panel";
 import { hydrate } from "@/lib/persist";
 
 const ACTIVITIES = seed as Activity[];
 const CANDIDATES = candidatesJson as Activity[];
 const CANDIDATES_AT = (candidatesMeta as { generatedAt: string | null }).generatedAt;
+const ADULTS = adultsJson as Activity[];
 const MAX_CHILDREN = 8;
 const BASE = DEMO_FAMILIES[0];
 
@@ -66,7 +70,7 @@ export function Demo() {
   const [placeholder, setPlaceholder] = useState<WeekendWeather | null>(null);
   const [rainMode, setRainMode] = useState<RainMode>("live");
   const [copied, setCopied] = useState(false);
-  const [tab, setTab] = useState<"weekend" | "eventi">("weekend");
+  const [tab, setTab] = useState<"weekend" | "adulti" | "esplora" | "eventi">("weekend");
   const [store, setStore] = useState<EventStoreData>({ events: [], rejected: [] });
   const [imported, setImported] = useState<ImportedCandidates>({ generatedAt: null, events: [] });
   const [today, setToday] = useState<string>("");
@@ -129,6 +133,14 @@ export function Demo() {
 
   const catalogue = useMemo(() => [...ACTIVITIES, ...store.events.filter((e) => e.status === "published")], [store]);
   const candidates = useMemo(() => mergeCandidates(CANDIDATES, CANDIDATES_AT, imported), [imported]);
+  // Adults: adult agenda events + anything for everyone (sagre, feste) found online or approved by hand.
+  const adultItems = useMemo(() => {
+    const adults = mergeCandidates(ADULTS, CANDIDATES_AT, imported, "adults");
+    const forAll = [...candidates, ...store.events].filter((e) => e.audience === "tutti" || e.audience === "adulti");
+    const map = new Map<string, Activity>();
+    for (const a of [...adults, ...forAll]) map.set(a.slug, a);
+    return [...map.values()];
+  }, [candidates, imported, store]);
   const updatedAt = [CANDIDATES_AT, imported.generatedAt].filter(Boolean).sort().pop() ?? null;
   const pending = useMemo(() => (today ? pendingCandidates(candidates, store, today) : []), [candidates, store, today]);
 
@@ -188,7 +200,7 @@ export function Demo() {
           <WeatherBadge w={weather} live={liveWeather} />
         </div>
         <nav aria-label="Sezioni" className="mx-auto flex max-w-2xl gap-1 px-4 pb-3 pt-3">
-          {([["weekend", "Weekend"], ["eventi", "Eventi"]] as const).map(([k, l]) => (
+          {([["weekend", "Famiglia"], ["adulti", "Adulti"], ["esplora", "Esplora"], ["eventi", "Eventi"]] as const).map(([k, l]) => (
             <button
               key={k}
               aria-pressed={tab === k}
@@ -206,7 +218,19 @@ export function Demo() {
         </nav>
       </header>
 
-      {tab === "eventi" ? (
+      {tab === "esplora" ? (
+        <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6">
+          <ExplorePanel
+            catalogue={ACTIVITIES.filter((a) => a.status !== "draft")}
+            events={[...store.events.filter((e) => e.audience !== "adulti"), ...candidates]}
+            adults={adultItems}
+          />
+        </main>
+      ) : tab === "adulti" ? (
+        <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6">
+          <AdultsPanel items={adultItems} area={area} weather={weather} today={today} />
+        </main>
+      ) : tab === "eventi" ? (
         <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6">
           {today ? <EventsPanel store={store} onStore={updateStore} pending={pending} today={today} area={area} updatedAt={updatedAt} onImport={importCandidates} /> : <Skeleton />}
         </main>

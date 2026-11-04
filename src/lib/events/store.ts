@@ -1,4 +1,4 @@
-import type { Activity, Category, CostBand, Setting } from "@/lib/engine/types";
+import type { Activity, Audience, Category, CostBand, Setting } from "@/lib/engine/types";
 import { ZONES, type ZoneName } from "@/data/zones";
 import { durableSet, localGet } from "@/lib/persist";
 
@@ -43,6 +43,22 @@ export function saveStore(data: EventStoreData) {
 export interface ImportedCandidates {
   generatedAt: string | null;
   events: Activity[];
+  /** Adults section (no approval needed). */
+  adults?: Activity[];
+}
+
+type AdultTuple = [string, string, string, string, string | null, string | null, string | null, string, number | null, number | null, string, string];
+
+/** Expands the compact adult tuples of the email code into activities. */
+export function adultFromTuple(t: AdultTuple): Activity {
+  const [slug, title, category, date, endDate, startTime, endTime, address, lat, lng, sourceUrl, costBand] = t;
+  return {
+    slug, title, category: category as Activity["category"], description: "", minAge: 0, maxAge: 17, multiAgeNote: "",
+    setting: "indoor", weatherFit: "rain_ok", costBand: (costBand || "low") as Activity["costBand"], priceNote: "",
+    durationMin: null, bookingRequired: null, address, zone: "", lat, lng, openingNote: "", sourceUrl,
+    status: "da_verificare", isDemo: false, audience: "adulti",
+    event: { date, endDate, startTime, endTime, organizer: null, origin: "agenda", approxPosition: true },
+  };
 }
 
 export function loadImported(): ImportedCandidates {
@@ -50,7 +66,11 @@ export function loadImported(): ImportedCandidates {
     const raw = safeGet(IMPORTED_KEY);
     if (!raw) return { generatedAt: null, events: [] };
     const v = JSON.parse(raw) as ImportedCandidates;
-    return { generatedAt: v.generatedAt ?? null, events: Array.isArray(v.events) ? v.events : [] };
+    return {
+      generatedAt: v.generatedAt ?? null,
+      events: Array.isArray(v.events) ? v.events : [],
+      adults: Array.isArray(v.adults) ? v.adults : [],
+    };
   } catch {
     return { generatedAt: null, events: [] };
   }
@@ -74,7 +94,7 @@ export function parseImportCode(text: string): ImportedCandidates | { error: str
   } catch {
     return { error: "Il codice è incompleto: copialo di nuovo con il pulsante copia del riquadro." };
   }
-  const d = data as { wf?: number; generatedAt?: string; events?: Partial<Activity>[] };
+  const d = data as { wf?: number; generatedAt?: string; events?: Partial<Activity>[]; adults?: AdultTuple[] };
   if (d.wf !== 1 || !Array.isArray(d.events)) return { error: "Questo non è un codice eventi di Weekend in Famiglia." };
   const events: Activity[] = d.events
     .filter((e) => e && typeof e.slug === "string" && typeof e.title === "string" && e.event?.date)
@@ -100,14 +120,23 @@ export function parseImportCode(text: string): ImportedCandidates | { error: str
       ...e,
       status: "da_verificare",
     }) as Activity);
-  return { generatedAt: d.generatedAt ?? null, events };
+  const adults = Array.isArray(d.adults)
+    ? d.adults.filter((t) => Array.isArray(t) && typeof t[0] === "string" && typeof t[3] === "string").map(adultFromTuple)
+    : [];
+  return { generatedAt: d.generatedAt ?? null, events, adults };
 }
 
 /** Bundled candidates (from the APK) + imported ones; the newer list wins on the same event. */
-export function mergeCandidates(bundled: Activity[], bundledAt: string | null, imported: ImportedCandidates): Activity[] {
+export function mergeCandidates(
+  bundled: Activity[],
+  bundledAt: string | null,
+  imported: ImportedCandidates,
+  which: "events" | "adults" = "events",
+): Activity[] {
   const importedNewer = (imported.generatedAt ?? "") >= (bundledAt ?? "");
+  const extra = (which === "adults" ? imported.adults : imported.events) ?? [];
   const map = new Map<string, Activity>();
-  for (const c of importedNewer ? [...bundled, ...imported.events] : [...imported.events, ...bundled]) map.set(c.slug, c);
+  for (const c of importedNewer ? [...bundled, ...extra] : [...extra, ...bundled]) map.set(c.slug, c);
   return [...map.values()];
 }
 
@@ -148,6 +177,8 @@ export interface EventForm {
   category: Category;
   sourceUrl: string;
   organizer: string;
+  /** Who it is for; default "famiglie". */
+  audience?: Audience;
 }
 
 export function slugify(s: string) {
@@ -185,6 +216,7 @@ export function formToEvent(f: EventForm, origin: "agenda" | "manuale" = "manual
     sourceUrl: f.sourceUrl.trim(),
     status: "published",
     isDemo: false,
+    audience: f.audience ?? "famiglie",
     event: {
       date: f.date,
       endDate: null,
@@ -214,6 +246,7 @@ export function eventToForm(a: Activity): EventForm {
     category: a.category,
     sourceUrl: a.sourceUrl,
     organizer: a.event?.organizer ?? "",
+    audience: a.audience ?? "famiglie",
   };
 }
 

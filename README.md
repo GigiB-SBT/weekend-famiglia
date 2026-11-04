@@ -72,6 +72,29 @@ A ogni push su `main` la GitHub Action `.github/workflows/android-apk.yml` costr
 - Feste solo su volantini, WhatsApp o Facebook: **+ Aggiungi evento** nell'app.
 - **Promemoria** (solo app Android): mercoledì 18:30 eventi da approvare, venerdì 9:00 rivedi la mail. Si attivano dalla scheda Eventi.
 
+## Sezione Adulti
+
+- Scheda **Adulti**: eventi del weekend (venerdì-domenica) o dei prossimi 15 giorni per adulti: Cultura, Concerti live, Teatro e spettacoli, Notte, Gusto, Sagre e feste, All'aria aperta. Filtri per area, zona/raggio e tipo; stellina per salvarli (salvati in modo durevole).
+- Fonte: gli eventi dell'Agenda Cultura **non** per bambini (prima scartati) → `src/data/event-adults.json`, più sagre e feste (`audience: "tutti"`). Nessuna approvazione: sono marcati «da verificare».
+- `audience` sugli eventi: `famiglie` | `adulti` | `tutti`. Gli eventi `adulti` non entrano mai nelle proposte per le famiglie. Nel form «Aggiungi evento» c'è «Per chi».
+- Il codice eventi della mail include anche gli adulti in forma compatta (limite ~52.000 caratteri per stare nella issue GitHub).
+
+### Notte (locali, club, concerti)
+
+- Tipo **Notte** nella scheda Adulti (dj set, serate, club) accanto a Musica e spettacoli.
+- Fonti con `"mode": "venue"`: programmi dei locali e pagine concerti (`scripts/lib/local-pages.mjs` → `extractVenueEvents`): ogni voce con una data esplicita è un evento; il titolo è sulla stessa riga o accanto (l'impaginazione titolo-prima/dopo-la-data è rilevata da sola).
+- Bologna: Locomotiv, Freakout, Bravo Caffè (pagine zero.eu), Covo Club, Bologna Welcome «Musica e danza». Riviera: Songkick area Ascoli/San Benedetto, PalaRiviera, Il Tacco di Bacco San Benedetto. Censimento in `data/notte-fonti-censimento.json`.
+- Non usati: Xceed, Bandsintown, DICE (richiedono JavaScript), Resident Advisor (termini da verificare), Eventbrite (date relative senza anno).
+- **Concerti live** (tipo a parte, generi riconosciuti a parola intera): Songkick area Bologna (3 pagine), Unipol Arena, Estragon, Europauditorium, Teatro Duse, TicketOne Bologna, Teatro Comunale, Tacco di Bacco Imola; Riviera: Songkick Ascoli/San Benedetto, Fermo, Grottammare, TicketOne San Benedetto, Teatro Ventidio Basso, AllEvents Porto San Giorgio. Censimento in `data/concerti-fonti-censimento.json`.
+- I locali della Riviera (Noa, Sabya Beach, Savana Beach, BB Disco Dinner, Flow Rock Live…) non hanno un programma online leggibile: si aggiungono a mano con «Aggiungi evento» → tipo «Serata / club / dj set», Per chi «Solo adulti».
+
+## Esplora (ovunque, con GPS)
+
+- Scheda **Esplora**: funziona in qualsiasi località, non solo nelle due aree. «Vicino a me» usa il GPS (`@capacitor/geolocation`, permessi aggiunti da `scripts/android-version.mjs`); oppure si scrive una città (geocoding Open-Meteo, solo Italia).
+- Per la località scelta: meteo del weekend; **dal nostro elenco** (catalogo ed eventi entro il raggio); **luoghi vicini** da OpenStreetMap via Overpass (musei, parchi, zoo, castelli, teatri, club, cantine…; distanza, sito, mappa; © OpenStreetMap contributors, ODbL); **ricerche pronte** sul web con le date del weekend (eventi per bambini, sagre, concerti, mercatini…).
+- Modo Famiglia / Adulti, raggio 5-50 km. **Preferiti** con la stellina; una località cercata almeno 2 volte viene proposta come preferita. Preferiti e cronologia sono salvati in modo durevole (`wf.places.*`).
+- Codice: `src/lib/explore/` (geo, osm, websearch, places-store) e `src/app/explore-panel.tsx`.
+
 ## Aree, sagre, escursioni
 
 - **Due aree**: Bologna e Grottammare (selettore in alto nell'app; meteo per area). Zone in `src/data/zones.ts`, comuni per la distanza in `data/comuni.json`.
@@ -117,4 +140,5 @@ RLS: il catalogo è leggibile solo se `published`; `families`, `recommendations`
 | M4-lite | Bozza mail del venerdì e invio dopo approvazione | Bozza fatta; invio, log e import CSV famiglie da fare |
 | E1 | Eventi: aggiunta manuale, coda approvazione, lettura agende, promemoria | Fatto |
 | E1b | Sagre, escursioni e castagneti stagionali, area Grottammare | Fatto (dati da verificare) |
+| A1 | Sezione Adulti (cultura, musica, gusto, feste) | Fatto (dati da verificare) |
 | E2 | Eventi su Supabase, notifica immediata | Da fare (serve account Supabase) |

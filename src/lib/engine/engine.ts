@@ -100,6 +100,7 @@ export function scoreActivities(
     const flags: string[] = [];
     // Hard filters
     if (!allowedStatus.includes(a.status)) { excluded++; continue; }
+    if (a.audience === "adulti") { excluded++; continue; }
     if (!isAvailable(a, weather.saturday, weather.sunday)) { excluded++; continue; }
     if (!bands.includes(a.costBand)) { excluded++; continue; }
     const compat = compatibility(family.childrenAges, a.minAge, a.maxAge);
