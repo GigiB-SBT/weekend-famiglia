@@ -3,8 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import seed from "@/data/seed-activities.json";
 import { DEMO_FAMILIES } from "@/data/demo-families";
-import { AREA_IDS, AREAS, ZONES, areaOfZone, zonesOf, type AreaId, type ZoneName } from "@/data/zones";
-import { recommend } from "@/lib/engine/engine";
+import { AREA_IDS, AREAS, ZONE_NAMES, ZONES, areaOfZone, zonesOf, type AreaId, type ZoneName } from "@/data/zones";
+import { haversineKm, recommend } from "@/lib/engine/engine";
+import type { Place } from "@/lib/explore/geo";
+import { placeKey } from "@/lib/explore/places-store";
+import { StartPicker, loadStart, saveStart } from "./home-location";
 import type {
   Activity,
   Family,
@@ -62,7 +65,9 @@ export function Demo() {
   const [ages, setAges] = useState<number[]>(BASE.childrenAges);
   const [zone, setZone] = useState<ZoneName>(BASE.zone as ZoneName);
   const area: AreaId = areaOfZone(zone);
-  const [weatherByArea, setWeatherByArea] = useState<Partial<Record<AreaId, WeekendWeather>>>({});
+  // Starting point for the proposals: a place (GPS, favourite, town) or, if null, the zone.
+  const [start, setStart] = useState<Place | null>(null);
+  const [weatherByKey, setWeatherByKey] = useState<Record<string, WeekendWeather>>({});
   const [radiusKm, setRadiusKm] = useState(BASE.radiusKm);
   const [budget, setBudget] = useState<FamilyBudget>(BASE.budget);
   const [preference, setPreference] = useState<SettingPreference>(BASE.preference);
@@ -86,6 +91,8 @@ export function Demo() {
         if (!alive) return;
         setStore(loadStore());
         setImported(loadImported());
+        const s = loadStart();
+        if (s) setStart(s);
       });
       const d = new Date();
       setToday(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
@@ -93,20 +100,31 @@ export function Demo() {
     return () => { alive = false; };
   }, []);
 
-  // Weather for the selected area (fetched once per area).
+  // Weather where the family starts from (a chosen place, else the area); fetched once per point.
+  const weatherKey = start ? placeKey(start) : area;
   useEffect(() => {
-    if (weatherByArea[area]) {
-      queueMicrotask(() => setLiveWeather(weatherByArea[area] ?? null));
+    if (weatherByKey[weatherKey]) {
+      queueMicrotask(() => setLiveWeather(weatherByKey[weatherKey] ?? null));
       return;
     }
     let alive = true;
-    getWeekendWeather({ lat: AREAS[area].lat, lng: AREAS[area].lng }).then((w) => {
+    const at = start ?? AREAS[area];
+    getWeekendWeather({ lat: at.lat, lng: at.lng }).then((w) => {
       if (!alive) return;
-      setWeatherByArea((m) => ({ ...m, [area]: w }));
+      setWeatherByKey((m) => ({ ...m, [weatherKey]: w }));
       setLiveWeather(w);
     });
     return () => { alive = false; };
-  }, [area, weatherByArea]);
+  }, [weatherKey, start, area, weatherByKey]);
+
+  function chooseStart(p: Place | null) {
+    setStart(p);
+    saveStart(p);
+    if (!p) return;
+    // Near one of our areas: align the zone (and so the Adulti/Eventi tabs) with it.
+    const nearest = ZONE_NAMES.map((z) => ({ z, d: haversineKm(p.lat, p.lng, ZONES[z].lat, ZONES[z].lng) })).sort((a, b) => a.d - b.d)[0];
+    if (nearest && nearest.d <= 60) setZone(nearest.z);
+  }
 
   const weather: WeekendWeather | null = useMemo(() => {
     const w = liveWeather ?? placeholder;
@@ -120,18 +138,18 @@ export function Demo() {
     () => ({
       id: "demo",
       email: BASE.email,
-      zone,
-      ...ZONES[zone],
+      zone: start ? start.name : zone,
+      lat: start ? start.lat : ZONES[zone].lat,
+      lng: start ? start.lng : ZONES[zone].lng,
       radiusKm,
       childrenAges: ages,
       budget,
       preference,
       interests: [],
     }),
-    [ages, zone, radiusKm, budget, preference],
+    [ages, zone, start, radiusKm, budget, preference],
   );
 
-  const catalogue = useMemo(() => [...ACTIVITIES, ...store.events.filter((e) => e.status === "published")], [store]);
   const candidates = useMemo(() => mergeCandidates(CANDIDATES, CANDIDATES_AT, imported), [imported]);
   // Adults: adult agenda events + anything for everyone (sagre, feste) found online or approved by hand.
   const adultItems = useMemo(() => {
@@ -143,6 +161,15 @@ export function Demo() {
   }, [candidates, imported, store]);
   const updatedAt = [CANDIDATES_AT, imported.generatedAt].filter(Boolean).sort().pop() ?? null;
   const pending = useMemo(() => (today ? pendingCandidates(candidates, store, today) : []), [candidates, store, today]);
+  // Home proposals: catalogue + approved events + events found online not yet rejected (marked "da verificare").
+  const catalogue = useMemo(
+    () => [
+      ...ACTIVITIES,
+      ...store.events.filter((e) => e.status === "published" && e.audience !== "adulti"),
+      ...pending.filter((e) => e.audience !== "adulti"),
+    ],
+    [store, pending],
+  );
 
   function importCandidates(next: ImportedCandidates) {
     setImported(next);
@@ -152,6 +179,17 @@ export function Demo() {
     () => (weather ? recommend(family, catalogue, weather, { allowUnverified: true, now: new Date(weather.fetchedAt) }) : null),
     [family, weather, catalogue],
   );
+
+  // Events this weekend within the radius (shown as a hint above the ideas).
+  const eventsNear = useMemo(() => {
+    if (!weather?.saturday || !weather.sunday) return 0;
+    const sat = weather.saturday, sun = weather.sunday;
+    return catalogue.filter((a) => {
+      if (!a.event || a.lat == null || a.lng == null) return false;
+      const end = a.event.endDate ?? a.event.date;
+      return a.event.date <= sun && end >= sat && haversineKm(family.lat, family.lng, a.lat, a.lng) <= radiusKm;
+    }).length;
+  }, [catalogue, weather, family, radiusKm]);
 
   function updateStore(next: EventStoreData) {
     setStore(next);
@@ -264,14 +302,18 @@ export function Demo() {
             )}
           </div>
 
+          <div className="border-t border-line pt-3">
+            <StartPicker start={start} zone={zone} onStart={chooseStart} />
+          </div>
+
           <details className="group">
             <summary className="flex cursor-pointer list-none items-center gap-1 text-sm text-ink-2 hover:text-ink">
               <Chevron />
               Altri filtri
-              <span className="text-ink-2">· {zone}, {radiusKm} km, {BUDGETS.find((b) => b.v === budget)?.l.toLowerCase()}</span>
+              <span className="text-ink-2">· {start ? start.name : zone}, {radiusKm} km, {BUDGETS.find((b) => b.v === budget)?.l.toLowerCase()}</span>
             </summary>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <Select id="zone" label="Zona di partenza" value={zone} onChange={(v) => setZone(v as ZoneName)}
+              <Select id="zone" label="Zona di partenza" value={zone} onChange={(v) => { setZone(v as ZoneName); chooseStart(null); }}
                 options={zonesOf(area).map((z) => ({ v: z, l: z }))} />
               <Select id="radius" label="Distanza massima" value={String(radiusKm)} onChange={(v) => setRadiusKm(Number(v))}
                 options={RADII.map((r) => ({ v: String(r), l: `${r} km` }))} />
@@ -292,7 +334,12 @@ export function Demo() {
         ) : (
           <>
             <section className="flex flex-col gap-3">
-              <h2 className="text-base font-semibold">3 idee per figli di {agesLabel(ages)}</h2>
+              <h2 className="text-base font-semibold">3 idee per figli di {agesLabel(ages)} <span className="font-normal text-ink-2">· da {start ? start.name : zone}</span></h2>
+              {eventsNear > 0 && (
+                <p className="-mt-1 text-xs text-ink-2">
+                  <span className="num font-semibold text-coral">{eventsNear}</span> {eventsNear === 1 ? "evento" : "eventi"} questo weekend entro {radiusKm} km: hanno la precedenza se adatti ai tuoi figli.
+                </p>
+              )}
               <ol className="flex flex-col gap-3">
                 {rec.ideas.map((s, i) => <Idea key={s.activity.slug} s={s} n={i + 1} ages={ages} colors={kidColor} />)}
               </ol>
@@ -380,6 +427,9 @@ function Idea({ s, n, ages, colors }: { s: ScoredActivity; n: number; ages: numb
             <p className="num mt-1 inline-block rounded-full bg-coral px-2.5 py-0.5 text-xs font-semibold text-white">
               Solo questo weekend · {eventWhen(a)}
             </p>
+          )}
+          {a.event && a.status !== "published" && (
+            <p className="text-xs text-ink-2">Trovato online · da verificare{a.event.organizer ? ` · ${a.event.organizer}` : ""}</p>
           )}
           <p className="num text-sm text-ink-2">
             {s.distanceKm != null ? km(s.distanceKm) : a.zone} · {COST_LABEL[a.costBand]}

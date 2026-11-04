@@ -88,6 +88,11 @@ A ogni push su `main` la GitHub Action `.github/workflows/android-apk.yml` costr
 - **Concerti live** (tipo a parte, generi riconosciuti a parola intera): Songkick area Bologna (3 pagine), Unipol Arena, Estragon, Europauditorium, Teatro Duse, TicketOne Bologna, Teatro Comunale, Tacco di Bacco Imola; Riviera: Songkick Ascoli/San Benedetto, Fermo, Grottammare, TicketOne San Benedetto, Teatro Ventidio Basso, AllEvents Porto San Giorgio. Censimento in `data/concerti-fonti-censimento.json`.
 - I locali della Riviera (Noa, Sabya Beach, Savana Beach, BB Disco Dinner, Flow Rock Live…) non hanno un programma online leggibile: si aggiungono a mano con «Aggiungi evento» → tipo «Serata / club / dj set», Per chi «Solo adulti».
 
+## Proposte in home: eventi e località
+
+- Le 3 idee della scheda **Famiglia** usano: catalogo + eventi approvati + **eventi trovati online non ancora scartati** (segnati «Trovato online · da verificare»). Un evento del weekend adatto all'età ha la precedenza; sopra le idee c'è il conteggio degli eventi entro il raggio.
+- **Da dove partite**: zona, «Vicino a me» (GPS), località preferite di Esplora o «Altrove…» (qualsiasi città). Distanze e meteo seguono il punto scelto, che resta salvato (`wf.home.start.v1`). Vicino a Bologna o Grottammare, area e zona si allineano da sole.
+
 ## Esplora (ovunque, con GPS)
 
 - Scheda **Esplora**: funziona in qualsiasi località, non solo nelle due aree. «Vicino a me» usa il GPS (`@capacitor/geolocation`, permessi aggiunti da `scripts/android-version.mjs`); oppure si scrive una città (geocoding Open-Meteo, solo Italia).
