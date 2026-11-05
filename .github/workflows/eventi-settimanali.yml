@@ -1,5 +1,10 @@
 name: Eventi settimanali
 
+# Every Wednesday morning: reads the public agendas, saves the candidates in the
+# code, opens a GitHub issue "N eventi da approvare" (GitHub emails it to you)
+# The app downloads the new events by itself at the next opening (no APK rebuild).
+# Run by hand: Actions → Eventi settimanali → Run workflow.
+
 on:
   schedule:
     - cron: "17 6 * * 3"
@@ -8,7 +13,6 @@ on:
 permissions:
   contents: write
   issues: write
-  actions: write
 
 jobs:
   eventi:
@@ -16,29 +20,33 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+
       - name: Leggi le agende
         id: fetch
         run: node --no-warnings scripts/fetch-events.mjs
+
       - name: Salva i candidati
         run: |
-          if git diff --quiet -- src/data/event-candidates.json; then
-            echo "Nessuna novità nei candidati."
+          files="src/data/event-candidates.json src/data/event-adults.json src/data/event-candidates-meta.json"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add $files
+          if git diff --cached --quiet; then
+            echo "Nessuna novità."
           else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
-            git add src/data/event-candidates.json
-            git commit -q -m "Eventi candidati della settimana"
+            git commit -q -m "Eventi della settimana"
+            git pull -q --rebase origin main
             git push
           fi
+
       - name: Mail al founder (issue GitHub)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh issue create --title "${{ steps.fetch.outputs.count }} eventi da approvare · $(date +%d/%m)" --body-file events-report.md
-      - name: Ricostruisci l'APK
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run android-apk.yml --ref main
+          gh issue create \
+            --title "${{ steps.fetch.outputs.count }} eventi da approvare · $(date +%d/%m)" \
+            --body-file events-report.md
