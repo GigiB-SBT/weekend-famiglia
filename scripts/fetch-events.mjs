@@ -333,8 +333,33 @@ for (const source of SOURCES) {
   }
 }
 
+// Tidy titles from listing pages ("calendar_today 6 November…", HTML entities, dates
+// in front) and drop generic ones ("FAMIGLIE", "Provincia Sagre …"); one per title and day.
+const ENT = { amp: "&", quot: '"', apos: "'", lt: "<", gt: ">", nbsp: " " };
+function tidyTitle(t) {
+  return t
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d)))
+    .replace(/&([a-z]+);/gi, (m, n) => ENT[n.toLowerCase()] ?? m)
+    .replace(/\s*calendar_today\b.*$/i, "")
+    .replace(/^(?:luned[iì]|marted[iì]|mercoled[iì]|gioved[iì]|venerd[iì]|sabato|domenica)\s+\d{1,2}\s+[a-zà-ù]+\s*(?:\d{4})?\s*(?:[-–,]\s*)?(?:alle\s+)?(?:ore\s+)?(?:\d{1,2}[.:]\d{2})?\s*[-–,]?\s*/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+const GENERIC = /^(famiglie|bambini|eventi|fiera(\s+\d.*)?|provincia\s+sagre.*|sagre(\s+.*)?\s+in\s+.*|programma.*)$/i;
+function tidy(list) {
+  const byKey = new Set();
+  return list
+    .map((c) => ({ ...c, title: tidyTitle(c.title) }))
+    .filter((c) => c.title.length >= 4 && !GENERIC.test(c.title))
+    .filter((c) => {
+      const k = c.title.toLowerCase().replace(/[^a-z0-9à-ù]+/g, " ").trim().slice(0, 40) + "|" + c.event.date;
+      return byKey.has(k) ? false : (byKey.add(k), true);
+    });
+}
+
 const seen = new Set();
-const candidates = all
+const candidates = tidy(all)
   .filter((c) => (seen.has(c.slug) ? false : (seen.add(c.slug), true)))
   .sort((a, b) => (a.event.date + (a.event.startTime ?? "")).localeCompare(b.event.date + (b.event.startTime ?? "")))
   .slice(0, MAX_CANDIDATES);
@@ -342,7 +367,7 @@ const candidates = all
 writeFileSync(new URL("../src/data/event-candidates.json", import.meta.url), JSON.stringify(candidates, null, 2) + "\n");
 
 const seenAdults = new Set();
-const adults = adultsAll
+const adults = tidy(adultsAll)
   .filter((c) => (seenAdults.has(c.slug) ? false : (seenAdults.add(c.slug), true)))
   .sort((a, b) => (a.event.date + (a.event.startTime ?? "")).localeCompare(b.event.date + (b.event.startTime ?? "")))
   .slice(0, MAX_ADULTS);

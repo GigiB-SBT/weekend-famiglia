@@ -195,7 +195,12 @@ export function Demo() {
   // Adults: adult agenda events + anything for everyone (sagre, feste) found online or approved by hand.
   const adultItems = useMemo(() => {
     const adults = mergeCandidates(ADULTS, CANDIDATES_AT, imported, "adults");
-    const forAll = [...candidates, ...store.events].filter((e) => e.audience === "tutti" || e.audience === "adulti");
+    // From the family lists only what is really for grown-ups too: events the founder
+    // marked "adulti", plus sagre and food events open to everyone. Kids' workshops,
+    // shows and parish games stay in the Famiglia tab.
+    const forAll = [...candidates, ...store.events].filter(
+      (e) => e.audience === "adulti" || (e.audience === "tutti" && (e.category === "festa" || e.category === "gusto")),
+    );
     const map = new Map<string, Activity>();
     for (const a of [...adults, ...forAll]) map.set(a.slug, a);
     return [...map.values()];

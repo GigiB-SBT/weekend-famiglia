@@ -63,6 +63,8 @@ export function AdultsPanel({
     [when, sat, today],
   );
 
+  // True when no real adult event has arrived yet (only shared sagre/feste).
+  const onlyFeste = items.every((a) => a.audience !== "adulti");
   const list = useMemo(() => {
     if (!range) return [];
     return items
@@ -163,7 +165,9 @@ export function AdultsPanel({
         <p className="text-sm text-ink-2">Carico…</p>
       ) : list.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-line px-4 py-8 text-center text-sm text-ink-2">
-          Nessun evento con questi filtri. Prova «Prossimi 15 giorni», un altro tipo o tutta l&apos;area. Gli eventi si aggiornano ogni mercoledì.
+          {onlyFeste
+            ? "Per ora ci sono solo sagre e feste: concerti, serate e mostre arrivano con il prossimo «Eventi settimanali»."
+            : "Nessun evento con questi filtri. Prova «Prossimi 15 giorni», un altro tipo o tutta l'area. Gli eventi si aggiornano ogni mercoledì."}
         </p>
       ) : (
         [...byDay.entries()].map(([day, evs]) => (
