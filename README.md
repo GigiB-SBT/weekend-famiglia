@@ -72,6 +72,18 @@ A ogni push su `main` la GitHub Action `.github/workflows/android-apk.yml` costr
 - Feste solo su volantini, WhatsApp o Facebook: **+ Aggiungi evento** nell'app.
 - **Promemoria** (solo app Android): mercoledì 18:30 eventi da approvare, venerdì 9:00 rivedi la mail. Si attivano dalla scheda Eventi.
 
+### Aggiornamenti automatici
+
+- **Eventi**: l'app li scarica da GitHub a ogni apertura e quando torna in primo piano (al massimo ogni 30 minuti). Il workflow settimanale non ricostruisce più l'APK.
+- **App**: a ogni apertura confronta il proprio numero di build (`NEXT_PUBLIC_BUILD` = numero del run GitHub) con l'ultima release `beta-N`; se c'è una versione nuova mostra «Aggiorna». Android non consente installazioni silenziose fuori dal Play Store: serve un tocco e la conferma di installazione.
+- **Dati**: chiave di firma fissa + Preferences → eventi approvati, scartati, importati, preferiti e località restano dopo ogni aggiornamento. Solo disinstallare cancella tutto (usa «Backup eventi»).
+- Richiede il repository **pubblico** (raw.githubusercontent.com e API releases senza login).
+
+### Aggiornamento degli eventi nell'app
+
+- All'apertura l'app scarica gli ultimi eventi da GitHub (`src/lib/events/remote.ts`, raw.githubusercontent.com): niente reinstallazione né codice dalla mail. Funziona solo con repository **pubblico**; altrimenti resta il codice della mail. Pulsante «Scarica da GitHub» nella scheda Eventi.
+- Il workflow «Eventi settimanali» salva candidati, adulti e meta. Lo zip del codice **non contiene** questi tre file, così caricarlo non cancella gli eventi già letti.
+
 ## Sezione Adulti
 
 - Scheda **Adulti**: eventi del weekend (venerdì-domenica) o dei prossimi 15 giorni per adulti: Cultura, Concerti live, Teatro e spettacoli, Notte, Gusto, Sagre e feste, All'aria aperta. Filtri per area, zona/raggio e tipo; stellina per salvarli (salvati in modo durevole).

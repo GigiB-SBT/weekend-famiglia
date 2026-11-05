@@ -55,6 +55,13 @@ function emptyForm(today: string, area: AreaId): EventForm {
   };
 }
 
+const SYNC_NOTE: Record<string, string> = {
+  ok: "Eventi scaricati da GitHub: l'app li prende da sola a ogni apertura.",
+  private: "Download automatico non disponibile: il repository GitHub è privato. Usa «Importa eventi dalla mail».",
+  offline: "GitHub non raggiungibile: riprova più tardi o usa «Importa eventi dalla mail».",
+  empty: "Su GitHub non ci sono ancora eventi: lancia «Eventi settimanali» e riprova tra un paio di minuti.",
+};
+
 export function EventsPanel({
   store,
   onStore,
@@ -63,6 +70,8 @@ export function EventsPanel({
   area,
   updatedAt,
   onImport,
+  sync,
+  onSync,
 }: {
   store: EventStoreData;
   onStore: (s: EventStoreData) => void;
@@ -71,6 +80,8 @@ export function EventsPanel({
   area: AreaId;
   updatedAt: string | null;
   onImport: (v: ImportedCandidates) => void;
+  sync: string;
+  onSync: () => void;
 }) {
   const [form, setForm] = useState<EventForm | null>(null);
   const [flyer, setFlyer] = useState("");
@@ -297,6 +308,9 @@ export function EventsPanel({
             <span className="font-semibold">Eventi online</span>{" "}
             <span className="text-ink-2">{updatedLabel ? `aggiornati ${updatedLabel}` : "non ancora letti"}</span>
           </p>
+          <button onClick={onSync} disabled={sync === "busy"} className="rounded-full border border-line px-3 py-1.5 text-sm disabled:opacity-50">
+            {sync === "busy" ? "Scarico…" : "Scarica da GitHub"}
+          </button>
           {!importOpen && (
             <button onClick={() => { setImportOpen(true); setImportNote(null); }} className="rounded-full bg-shell px-3 py-1.5 text-sm font-semibold text-on-shell">
               Importa eventi dalla mail
@@ -315,6 +329,7 @@ export function EventsPanel({
           </div>
         )}
         {importNote && <p className="text-xs text-ink-2">{importNote}</p>}
+        {SYNC_NOTE[sync] && <p className="text-xs text-ink-2">{SYNC_NOTE[sync]}</p>}
       </section>
 
       <section aria-label="Filtro zona" className="flex flex-wrap items-end gap-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import seed from "@/data/seed-activities.json";
 import { DEMO_FAMILIES } from "@/data/demo-families";
 import { AREA_IDS, AREAS, ZONE_NAMES, ZONES, areaOfZone, zonesOf, type AreaId, type ZoneName } from "@/data/zones";
@@ -37,6 +37,8 @@ import { EventsPanel } from "./events-panel";
 import { AdultsPanel } from "./adults-panel";
 import { ExplorePanel } from "./explore-panel";
 import { hydrate } from "@/lib/persist";
+import { fetchRemoteEvents, isNewer } from "@/lib/events/remote";
+import { CURRENT_BUILD, checkUpdate, isNativeApp, type UpdateInfo } from "@/lib/update";
 
 const ACTIVITIES = seed as Activity[];
 const CANDIDATES = candidatesJson as Activity[];
@@ -79,6 +81,8 @@ export function Demo() {
   const [store, setStore] = useState<EventStoreData>({ events: [], rejected: [] });
   const [imported, setImported] = useState<ImportedCandidates>({ generatedAt: null, events: [] });
   const [today, setToday] = useState<string>("");
+  const [sync, setSync] = useState<string>("busy");
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -91,6 +95,7 @@ export function Demo() {
         if (!alive) return;
         setStore(loadStore());
         setImported(loadImported());
+        setReady(true);
         const s = loadStart();
         if (s) setStart(s);
       });
@@ -99,6 +104,37 @@ export function Demo() {
     });
     return () => { alive = false; };
   }, []);
+
+  // Automatic updates: weekly events from GitHub (merged only if newer than what the
+  // phone has; approved/rejected events are never touched) and the APK version.
+  const [update, setUpdate] = useState<UpdateInfo | null>(null);
+  const refreshOnline = useCallback(async () => {
+    setSync("busy");
+    const r = await fetchRemoteEvents();
+    if (r.ok && isNewer(r.data, loadImported())) {
+      setImported(r.data);
+      saveImported(r.data);
+    }
+    setSync(r.ok ? "ok" : r.reason);
+    if (await isNativeApp()) setUpdate(await checkUpdate());
+  }, []);
+
+  // At every start, once saved data has been restored.
+  useEffect(() => {
+    if (ready) queueMicrotask(() => void refreshOnline());
+  }, [ready, refreshOnline]);
+
+  // Also when the app comes back to the foreground (at most every 30 minutes).
+  useEffect(() => {
+    let last = Date.now();
+    const onVisible = () => {
+      if (document.visibilityState !== "visible" || Date.now() - last < 30 * 60_000) return;
+      last = Date.now();
+      void refreshOnline();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [refreshOnline]);
 
   // Weather where the family starts from (a chosen place, else the area); fetched once per point.
   const weatherKey = start ? placeKey(start) : area;
@@ -237,6 +273,15 @@ export function Demo() {
           </div>
           <WeatherBadge w={weather} live={liveWeather} />
         </div>
+        {update && (
+          <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-between gap-2 px-4 pt-3 text-sm text-on-shell">
+            <span>Nuova versione dell&apos;app disponibile. I tuoi eventi restano salvati.</span>
+            <span className="flex gap-2">
+              <a href={update.apkUrl} target="_blank" rel="noreferrer" className="rounded-full bg-accent px-3 py-1 font-semibold text-ink">Aggiorna</a>
+              <button onClick={() => setUpdate(null)} className="rounded-full px-2 py-1 text-on-shell-2">Dopo</button>
+            </span>
+          </div>
+        )}
         <nav aria-label="Sezioni" className="mx-auto flex max-w-2xl gap-1 px-4 pb-3 pt-3">
           {([["weekend", "Famiglia"], ["adulti", "Adulti"], ["esplora", "Esplora"], ["eventi", "Eventi"]] as const).map(([k, l]) => (
             <button
@@ -270,7 +315,10 @@ export function Demo() {
         </main>
       ) : tab === "eventi" ? (
         <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6">
-          {today ? <EventsPanel store={store} onStore={updateStore} pending={pending} today={today} area={area} updatedAt={updatedAt} onImport={importCandidates} /> : <Skeleton />}
+          {today ? <><EventsPanel store={store} onStore={updateStore} pending={pending} today={today} area={area} updatedAt={updatedAt} onImport={importCandidates} sync={sync} onSync={() => void refreshOnline()} />
+          <p className="num text-center text-xs text-ink-2">
+            {CURRENT_BUILD ? `Versione beta ${CURRENT_BUILD}` : "Versione di sviluppo"} · eventi approvati, scartati e preferiti restano sul telefono anche con gli aggiornamenti
+          </p></> : <Skeleton />}
         </main>
       ) : (
       <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6">
