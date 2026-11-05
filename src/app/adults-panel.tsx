@@ -137,7 +137,7 @@ export function AdultsPanel({
               </button>
             ))}
           </div>
-          <label htmlFor="ad-zone" className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-ink-2">
+          <label htmlFor="ad-zone" className="flex min-w-[10rem] flex-1 flex-col gap-1 text-xs text-ink-2">
             Zona
             <select id="ad-zone" value={zoneSel} onChange={(e) => setZoneFilter(e.target.value as ZoneName | "all")} className="field">
               <option value="all">Tutta l&apos;area</option>

@@ -7,7 +7,8 @@ import { AREA_IDS, AREAS, ZONE_NAMES, ZONES, areaOfZone, zonesOf, type AreaId, t
 import { haversineKm, recommend } from "@/lib/engine/engine";
 import type { Place } from "@/lib/explore/geo";
 import { placeKey } from "@/lib/explore/places-store";
-import { StartPicker, loadStart, saveStart } from "./home-location";
+import { StartPicker, loadAges, loadStart, saveAges, saveStart } from "./home-location";
+import { cachedPhoto, findPhoto, type Photo } from "@/lib/photos";
 import type {
   Activity,
   Family,
@@ -77,12 +78,13 @@ export function Demo() {
   const [placeholder, setPlaceholder] = useState<WeekendWeather | null>(null);
   const [rainMode, setRainMode] = useState<RainMode>("live");
   const [copied, setCopied] = useState(false);
-  const [tab, setTab] = useState<"weekend" | "adulti" | "esplora" | "eventi">("weekend");
+  const [tab, setTab] = useState<Tab>("weekend");
   const [store, setStore] = useState<EventStoreData>({ events: [], rejected: [] });
   const [imported, setImported] = useState<ImportedCandidates>({ generatedAt: null, events: [] });
   const [today, setToday] = useState<string>("");
   const [sync, setSync] = useState<string>("busy");
   const [ready, setReady] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -98,6 +100,9 @@ export function Demo() {
         setReady(true);
         const s = loadStart();
         if (s) setStart(s);
+        const savedAges = loadAges();
+        if (savedAges) setAges(savedAges);
+        else setEditing(true);
       });
       const d = new Date();
       setToday(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
@@ -234,6 +239,9 @@ export function Demo() {
   const draft = useMemo(() => (rec ? buildDraft(family, rec) : null), [family, rec]);
   const html = useMemo(() => (rec ? buildHtml(family, rec) : ""), [family, rec]);
   const kidColor = useMemo(() => colorByIndex(ages), [ages]);
+  useEffect(() => {
+    if (ready) saveAges(ages);
+  }, [ages, ready]);
 
   const setAge = (i: number, d: number) =>
     setAges((a) => a.map((x, j) => (j === i ? Math.min(17, Math.max(0, x + d)) : x)));
@@ -251,28 +259,13 @@ export function Demo() {
   }
 
   return (
-    <div className="min-h-full">
+    <div className="min-h-full pb-24">
       <header className="bg-shell text-on-shell">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-4 pt-4">
-          <div className="flex min-w-0 flex-col">
-            <h1 className="text-xl font-extrabold">Weekend in Famiglia</h1>
-            <label className="flex items-center gap-1 text-sm text-on-shell-2">
-              <span className="sr-only">Area</span>
-              <select
-                id="area"
-                value={area}
-                onChange={(e) => setZone(zonesOf(e.target.value as AreaId)[0])}
-                className="cursor-pointer appearance-none rounded-full bg-black/15 py-0.5 pl-2.5 pr-6 font-semibold text-on-shell"
-                style={{ backgroundImage: "linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%)", backgroundPosition: "calc(100% - 12px) 55%, calc(100% - 8px) 55%", backgroundSize: "4px 4px", backgroundRepeat: "no-repeat" }}
-              >
-                {AREA_IDS.map((a) => (
-                  <option key={a} value={a} className="text-ink">{AREAS[a].label}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <WeatherBadge w={weather} live={liveWeather} />
+          <h1 className="font-display text-lg font-extrabold tracking-tight">Weekend in Famiglia</h1>
+          {tab !== "weekend" && <WeatherBadge w={weather} live={liveWeather} />}
         </div>
+        {tab !== "weekend" && <div className="h-4" />}
         {update && (
           <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-between gap-2 px-4 pt-3 text-sm text-on-shell">
             <span>Nuova versione dell&apos;app disponibile. I tuoi eventi restano salvati.</span>
@@ -282,23 +275,9 @@ export function Demo() {
             </span>
           </div>
         )}
-        <nav aria-label="Sezioni" className="mx-auto flex max-w-2xl gap-1 px-4 pb-3 pt-3">
-          {([["weekend", "Famiglia"], ["adulti", "Adulti"], ["esplora", "Esplora"], ["eventi", "Eventi"]] as const).map(([k, l]) => (
-            <button
-              key={k}
-              aria-pressed={tab === k}
-              onClick={() => setTab(k)}
-              className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors duration-150 ${
-                tab === k ? "bg-on-shell text-shell" : "text-on-shell-2 hover:text-on-shell"
-              }`}
-            >
-              {l}
-              {k === "eventi" && pending.length > 0 && (
-                <span className="num rounded-full bg-coral px-1.5 text-xs text-white">{pending.length}</span>
-              )}
-            </button>
-          ))}
-        </nav>
+        {tab === "weekend" && (
+          <WeekendHero w={weather} live={liveWeather} from={start ? start.name : zone} eventsNear={eventsNear} radiusKm={radiusKm} />
+        )}
       </header>
 
       {tab === "esplora" ? (
@@ -322,19 +301,35 @@ export function Demo() {
         </main>
       ) : (
       <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6">
-        {/* Children: the one control that matters */}
-        <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
+        {!editing ? (
+          <button
+            onClick={() => setEditing(true)}
+            className="-mt-10 flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface px-4 py-3 text-left shadow-[0_6px_20px_-12px_rgb(16_34_63/0.35)] transition-colors duration-150 hover:border-ink-2"
+          >
+            <span className="flex min-w-0 flex-col">
+              <span className="flex items-center gap-2 text-sm font-semibold">
+                <span className="flex -space-x-1" aria-hidden="true">
+                  {ages.map((_, i) => <span key={i} className="h-3 w-3 rounded-full ring-2 ring-surface" style={{ background: kidColor[i] }} />)}
+                </span>
+                {ages.length ? `Figli di ${agesLabel(ages)}` : "Aggiungi i figli"}
+              </span>
+              <span className="truncate text-xs text-ink-2">Da {start ? start.name : zone}, entro {radiusKm} km, {BUDGETS.find((b) => b.v === budget)?.l.toLowerCase()}</span>
+            </span>
+            <span className="shrink-0 rounded-full bg-surface-2 px-3 py-1.5 text-sm font-semibold text-link">Cambia</span>
+          </button>
+        ) : (
+        <section className="-mt-10 flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 shadow-[0_6px_20px_-12px_rgb(16_34_63/0.35)]">
           <h2 className="text-sm font-semibold">Età dei figli</h2>
           <div className="flex flex-wrap gap-2">
             {ages.map((age, i) => (
               <div key={i} className="flex items-center rounded-full border border-line bg-ground">
                 <StepButton label={`Diminuisci età figlio ${i + 1}`} onClick={() => setAge(i, -1)} disabled={age <= 0}>−</StepButton>
-                <span className="num flex min-w-[4rem] items-center justify-center gap-1.5 text-sm font-semibold"><span className="h-2.5 w-2.5 rounded-full" style={{ background: kidColor[i] }} />{age} anni</span>
+                <span className="num flex min-w-[3.25rem] items-center justify-center gap-1.5 text-sm font-semibold"><span className="h-2.5 w-2.5 rounded-full" style={{ background: kidColor[i] }} />{age} anni</span>
                 <StepButton label={`Aumenta età figlio ${i + 1}`} onClick={() => setAge(i, 1)} disabled={age >= 17}>+</StepButton>
                 <button
                   aria-label={`Rimuovi figlio ${i + 1}`}
                   onClick={() => setAges((a) => a.filter((_, j) => j !== i))}
-                  className="mr-1 flex h-7 w-7 items-center justify-center rounded-full text-ink-2 transition-colors duration-150 hover:bg-surface-2 hover:text-ink"
+                  className="mr-0.5 flex h-7 w-7 items-center justify-center rounded-full text-ink-2 transition-colors duration-150 hover:bg-surface-2 hover:text-ink"
                 >
                   <XIcon />
                 </button>
@@ -358,11 +353,19 @@ export function Demo() {
             <summary className="flex cursor-pointer list-none items-center gap-1 text-sm text-ink-2 hover:text-ink">
               <Chevron />
               Altri filtri
-              <span className="text-ink-2">· {start ? start.name : zone}, {radiusKm} km, {BUDGETS.find((b) => b.v === budget)?.l.toLowerCase()}</span>
+              <span className="text-ink-2">({radiusKm} km, {BUDGETS.find((b) => b.v === budget)?.l.toLowerCase()})</span>
             </summary>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <Select id="zone" label="Zona di partenza" value={zone} onChange={(v) => { setZone(v as ZoneName); chooseStart(null); }}
-                options={zonesOf(area).map((z) => ({ v: z, l: z }))} />
+              <label htmlFor="zone" className="flex flex-col gap-1 text-xs text-ink-2">
+                Zona di partenza
+                <select id="zone" value={zone} onChange={(e) => { setZone(e.target.value as ZoneName); chooseStart(null); }} className="field">
+                  {AREA_IDS.map((a) => (
+                    <optgroup key={a} label={AREAS[a].label}>
+                      {zonesOf(a).map((z) => <option key={z} value={z}>{z}</option>)}
+                    </optgroup>
+                  ))}
+                </select>
+              </label>
               <Select id="radius" label="Distanza massima" value={String(radiusKm)} onChange={(v) => setRadiusKm(Number(v))}
                 options={RADII.map((r) => ({ v: String(r), l: `${r} km` }))} />
               <Select id="budget" label="Budget per uscita" value={budget} onChange={(v) => setBudget(v as FamilyBudget)}
@@ -371,7 +374,9 @@ export function Demo() {
                 options={PREFS} />
             </div>
           </details>
+          <button onClick={() => setEditing(false)} className="self-end rounded-full bg-shell px-5 py-2 text-sm font-semibold text-on-shell">Mostra le idee</button>
         </section>
+        )}
 
         {!weather || !rec || !draft ? (
           <Skeleton />
@@ -382,14 +387,9 @@ export function Demo() {
         ) : (
           <>
             <section className="flex flex-col gap-3">
-              <h2 className="text-base font-semibold">3 idee per figli di {agesLabel(ages)} <span className="font-normal text-ink-2">· da {start ? start.name : zone}</span></h2>
-              {eventsNear > 0 && (
-                <p className="-mt-1 text-xs text-ink-2">
-                  <span className="num font-semibold text-coral">{eventsNear}</span> {eventsNear === 1 ? "evento" : "eventi"} questo weekend entro {radiusKm} km: hanno la precedenza se adatti ai tuoi figli.
-                </p>
-              )}
+              <h2 className="font-display text-xl font-extrabold tracking-tight">Tre idee per voi</h2>
               <ol className="flex flex-col gap-3">
-                {rec.ideas.map((s, i) => <Idea key={s.activity.slug} s={s} n={i + 1} ages={ages} colors={kidColor} />)}
+                {rec.ideas.map((s, i) => <Idea key={s.activity.slug} s={s} ages={ages} colors={kidColor} featured={i === 0} />)}
               </ol>
             </section>
 
@@ -447,96 +447,159 @@ export function Demo() {
               </button>
             ))}
           </div>
-          <p>Demo con dati da verificare: orari, prezzi e posizioni vanno controllati prima dell&apos;invio.</p>
+          <p>Demo con dati da verificare: orari, prezzi e posizioni vanno controllati prima dell&apos;invio. Foto da Wikipedia e Wikimedia Commons, con licenze libere.</p>
         </footer>
       </main>
       )}
+      <BottomNav tab={tab} onTab={setTab} pending={pending.length} />
     </div>
   );
 }
 
 /* ---------- pieces ---------- */
 
-function Idea({ s, n, ages, colors }: { s: ScoredActivity; n: number; ages: number[]; colors: string[] }) {
+function usePhoto(a: ScoredActivity["activity"]): Photo | null {
+  const [photo, setPhoto] = useState<Photo | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const c = cachedPhoto(a.slug);
+    if (c !== undefined) queueMicrotask(() => alive && setPhoto(c));
+    else void findPhoto(a).then((p) => alive && setPhoto(p));
+    return () => { alive = false; };
+  }, [a]);
+  return photo;
+}
+
+function Idea({ s, ages, colors, featured }: { s: ScoredActivity; ages: number[]; colors: string[]; featured?: boolean }) {
   const a = s.activity;
-  return (
-    <li className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
-      <div className="flex items-start gap-3">
-        <span className="num flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-display text-base font-extrabold" style={NUM_STYLE[(n - 1) % 3]}>{n}</span>
-        <div className="min-w-0">
-          <h3 className="text-lg font-extrabold leading-snug">
-            {a.sourceUrl ? (
-              <a href={a.sourceUrl} target="_blank" rel="noreferrer" className="underline-offset-4 hover:underline">{a.title}</a>
-            ) : (
-              a.title
-            )}
-          </h3>
-          {a.event && (
-            <p className="num mt-1 inline-block rounded-full bg-coral px-2.5 py-0.5 text-xs font-semibold text-white">
-              Solo questo weekend · {eventWhen(a)}
-            </p>
-          )}
+  const photo = usePhoto(a);
+  const meta = [s.distanceKm != null ? km(s.distanceKm) : a.zone, COST_LABEL[a.costBand], a.bookingRequired ? "su prenotazione" : null].filter(Boolean);
+  const title = a.sourceUrl ? (
+    <a href={a.sourceUrl} target="_blank" rel="noreferrer" className="underline-offset-4 after:absolute after:inset-0 hover:underline">{a.title}</a>
+  ) : a.title;
+  const kind = (
+    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-ink-2">
+      <CategoryIcon c={a.category} />
+      {CATEGORY_LABEL[a.category] ?? a.category}
+      {a.event && <span className="num rounded-full bg-coral px-2 py-0.5 text-white">Solo questo weekend, {eventWhen(a)}</span>}
+    </p>
+  );
+
+  if (featured) {
+    return (
+      <li className={`relative overflow-hidden rounded-3xl border bg-surface transition-transform duration-200 hover:-translate-y-0.5 ${a.event ? "border-coral/60" : "border-line"}`}>
+        <Visual photo={photo} category={a.category} className="aspect-[16/10] w-full" big />
+        <div className="flex flex-col gap-2 p-4">
+          {kind}
+          <h3 className="font-display text-2xl font-extrabold leading-tight tracking-tight">{title}</h3>
+          <p className="num -mt-1 text-sm text-ink-2">{meta.join(", ")}</p>
+          {a.description && <p className="text-[0.95rem] leading-relaxed">{a.description}</p>}
+          <AgeFit min={a.minAge} max={a.maxAge} ages={ages} colors={colors} />
           {a.event && a.status !== "published" && (
-            <p className="text-xs text-ink-2">Trovato online · da verificare{a.event.organizer ? ` · ${a.event.organizer}` : ""}</p>
+            <p className="text-xs text-ink-2">Trovato online{a.event.organizer ? ` (${a.event.organizer})` : ""}: controlla il link prima di andare.</p>
           )}
-          <p className="num text-sm text-ink-2">
-            {s.distanceKm != null ? km(s.distanceKm) : a.zone} · {COST_LABEL[a.costBand]}
-            {a.bookingRequired ? " · su prenotazione" : ""}
-          </p>
         </div>
+      </li>
+    );
+  }
+
+  return (
+    <li className={`relative flex gap-3 rounded-2xl border bg-surface p-3 transition-transform duration-200 hover:-translate-y-0.5 ${a.event ? "border-coral/60" : "border-line"}`}>
+      <Visual photo={photo} category={a.category} className="h-24 w-24 shrink-0 rounded-xl" />
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        {kind}
+        <h3 className="font-display text-base font-extrabold leading-snug tracking-tight">{title}</h3>
+        <p className="num text-xs text-ink-2">{meta.join(", ")}</p>
+        <AgeFit min={a.minAge} max={a.maxAge} ages={ages} colors={colors} compact />
       </div>
-      <p className="text-sm">{a.description}</p>
-      <AgeRuler min={a.minAge} max={a.maxAge} ages={ages} colors={colors} />
     </li>
   );
 }
 
-/** Activity age range on a 0–17 scale, with each child placed on it. */
-function AgeRuler({ min, max, ages, colors }: { min: number; max: number; ages: number[]; colors: string[] }) {
-  const W = 300;
-  const pad = 8;
-  const x = (age: number) => pad + (age / 17) * (W - pad * 2);
+const CATEGORY_TINT: Record<string, string> = {
+  culture: "var(--surface-2)", outdoor: "#dff3e6", animals: "#fff3cf", party: "#ffe4dc", show: "#e3ecff", hands: "#fff3cf",
+};
+
+/** The activity's real photograph, or a tinted tile with its category glyph while none is known. */
+function Visual({ photo, category, className, big }: { photo: Photo | null; category: string; className: string; big?: boolean }) {
+  if (photo) {
+    return (
+      <div className={`overflow-hidden bg-surface-2 ${className}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={photo.url} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.03]" />
+      </div>
+    );
+  }
+  return (
+    <div className={`flex items-center justify-center text-ink-2 ${className}`} style={{ background: CATEGORY_TINT[categoryGroup(category)] }} aria-hidden="true">
+      <span className={big ? "scale-[3.2] opacity-70" : "scale-[1.8] opacity-70"}><CategoryIcon c={category} /></span>
+    </div>
+  );
+}
+
+/** Which children the activity suits, in each child's color. */
+function AgeFit({ min, max, ages, colors, compact }: { min: number; max: number; ages: number[]; colors: string[]; compact?: boolean }) {
   const outside = ages.filter((g) => g < min || g > max);
   return (
-    <div className="flex items-center gap-3">
-      <svg viewBox={`0 0 ${W} 20`} className="block h-5 w-full max-w-[220px]" role="img" aria-label={`Adatto da ${min} a ${max} anni`}>
-        <line x1={pad} x2={W - pad} y1={10} y2={10} style={{ stroke: "var(--line)" }} strokeWidth={3} strokeLinecap="round" />
-        <line x1={x(min)} x2={x(max)} y1={10} y2={10} style={{ stroke: "var(--accent)" }} strokeWidth={8} strokeLinecap="round" />
+    <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs ${compact ? "mt-auto" : "border-t border-line pt-2"}`}>
+      <span className="flex items-center gap-1.5" aria-hidden="true">
         {ages.map((g, i) => {
           const ok = g >= min && g <= max;
           return (
-            <circle key={i} cx={x(g)} cy={10} r={6} strokeWidth={2.5}
-              style={ok ? { fill: colors[i], stroke: "var(--surface)" } : { fill: "var(--surface)", stroke: colors[i] }} />
+            <span key={i} className={`num flex items-center gap-1 ${ok ? "font-semibold" : "text-ink-2 line-through"}`}>
+              <span className="h-2 w-2 rounded-full" style={ok ? { background: colors[i] } : { boxShadow: `inset 0 0 0 1.5px ${colors[i]}` }} />
+              {g}
+            </span>
           );
         })}
-      </svg>
-      <span className={`num shrink-0 text-xs ${outside.length ? "text-warn" : "text-ink-2"}`}>
-        {min}–{max} anni{outside.length ? ` · ${outside.join(", ")} fuori fascia` : ""}
       </span>
+      <span className={outside.length ? "text-warn" : "text-ok"}>
+        {outside.length === 0
+          ? ages.length > 1 ? "Va bene per tutti" : "Adatto"
+          : `Non adatto a ${outside.join(" e ")} anni`}
+        <span className="num text-ink-2">{` (${min}–${max} anni)`}</span>
+      </span>
+    </div>
+  );
+}
+
+/** The weekend at a glance: dates, weather in words, where you start from. */
+function WeekendHero({ w, live, from, eventsNear, radiusKm }: { w: WeekendWeather | null; live: WeekendWeather | null; from: string; eventsNear: number; radiusKm: number }) {
+  const d = (x: string | null, opts: Intl.DateTimeFormatOptions) => (x ? new Date(x + "T12:00:00").toLocaleDateString("it-IT", opts) : "");
+  const sat = w?.saturday ?? null;
+  const sun = w?.sunday ?? null;
+  const sameMonth = sat && sun && sat.slice(5, 7) === sun.slice(5, 7);
+  const satFull = sat && sun
+    ? `Sabato ${d(sat, sameMonth ? { day: "numeric" } : { day: "numeric", month: "long" })} e domenica ${d(sun, { day: "numeric", month: "long" })}`
+    : "Il prossimo weekend";
+  let weather = "Cerco il meteo…";
+  let icon = <CloudIcon />;
+  if (w?.source === "fallback") weather = live ? "Meteo non disponibile: idee buone con ogni tempo." : "Cerco il meteo…";
+  else if (w?.rainy) { weather = `Pioggia probabile (${w.rainProbability}%): prima le idee al coperto.`; icon = <RainIcon />; }
+  else if (w) { weather = w.tempMax != null ? `Asciutto, fino a ${w.tempMax}°. Si può stare fuori.` : "Asciutto. Si può stare fuori."; icon = <SunIcon />; }
+  return (
+    <div className="mx-auto max-w-2xl px-4 pb-14 pt-3">
+      <p className="font-display text-[1.75rem] font-extrabold leading-[1.1] tracking-tight text-balance">{satFull}</p>
+      <p className="mt-2 flex items-start gap-2 text-sm text-on-shell"><span className="mt-0.5">{icon}</span>{weather}</p>
+      <p className="mt-1 text-sm text-on-shell-2">
+        Partenza da {from}, entro {radiusKm} km.
+        {eventsNear > 0 && <> <span className="font-semibold text-accent">{eventsNear} {eventsNear === 1 ? "evento" : "eventi"}</span> solo per questo weekend.</>}
+      </p>
     </div>
   );
 }
 
 function WeatherBadge({ w, live }: { w: WeekendWeather | null; live: WeekendWeather | null }) {
-  const day = (d: string | null) => (d ? new Date(d + "T12:00:00").toLocaleDateString("it-IT", { day: "numeric", month: "short" }) : "");
   let label = "…";
-  let icon = <SunIcon />;
-  if (w?.source === "fallback") {
-    label = live ? "meteo n.d." : "…";
-    icon = <CloudIcon />;
-  } else if (w?.rainy) {
-    label = `pioggia ${w.rainProbability}%`;
-    icon = <RainIcon />;
-  } else if (w) {
-    label = w.tempMax != null ? `sole · ${w.tempMax}°` : "sole";
-  }
+  let icon = <CloudIcon />;
+  if (w?.source === "fallback") label = live ? "meteo n.d." : "…";
+  else if (w?.rainy) { label = `pioggia ${w.rainProbability}%`; icon = <RainIcon />; }
+  else if (w) { label = w.tempMax != null ? `${w.tempMax}°` : "sole"; icon = <SunIcon />; }
   return (
-    <div className="flex items-center gap-2 text-sm">
+    <p className="num flex items-center gap-1.5 text-sm text-on-shell-2" aria-label={`Meteo del weekend: ${label}`}>
       {icon}
-      <span className="num">
-        {w ? `${day(w.saturday)}–${day(w.sunday)}` : ""} <span className="text-on-shell-2">· {label}</span>
-      </span>
-    </div>
+      {label}
+    </p>
   );
 }
 
@@ -558,7 +621,7 @@ function StepButton({ label, onClick, disabled, children }: {
 }) {
   return (
     <button aria-label={label} onClick={onClick} disabled={disabled}
-      className="flex h-9 w-9 items-center justify-center rounded-full text-lg text-ink-2 transition-colors duration-150 hover:text-ink disabled:opacity-30">
+      className="flex h-8 w-8 items-center justify-center rounded-full text-lg text-ink-2 transition-colors duration-150 hover:text-ink disabled:opacity-30">
       {children}
     </button>
   );
@@ -576,11 +639,6 @@ function Skeleton() {
   );
 }
 
-const NUM_STYLE = [
-  { background: "var(--coral)", color: "#ffffff" },
-  { background: "var(--accent)", color: "#10223f" },
-  { background: "var(--shell)", color: "#ffffff" },
-];
 
 /** Children keep a stable color by age order, matching the email. */
 function colorByIndex(ages: number[]): string[] {
@@ -588,6 +646,71 @@ function colorByIndex(ages: number[]): string[] {
   const out: string[] = [];
   order.forEach((o, rank) => { out[o.i] = KID_COLORS[rank % KID_COLORS.length]; });
   return out;
+}
+
+const CATEGORY_LABEL: Record<string, string> = {
+  museo: "Museo", natura: "All'aria aperta", fattoria: "Animali e fattorie", sport: "Sport", laboratorio: "Laboratorio",
+  scienza: "Scienza", biblioteca: "Biblioteca e letture", gita: "Gita", festa: "Festa e sagra", spettacolo: "Spettacolo",
+  musica: "Musica", gusto: "Gusto", incontro: "Incontro", notte: "Sera",
+};
+
+/** One small glyph per family of categories (indoor culture, outdoors, animals, celebration, show). */
+function CategoryIcon({ c }: { c: string }) {
+  const paths: Record<string, React.ReactNode> = {
+    culture: <><path d="M3 10l9-5 9 5" /><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18" /></>,
+    outdoor: <><path d="M3 19l6-10 4 6 2-3 6 7z" /><circle cx="17" cy="6" r="2" /></>,
+    animals: <><circle cx="7" cy="9" r="1.6" /><circle cx="12" cy="6.5" r="1.6" /><circle cx="17" cy="9" r="1.6" /><path d="M8 17c0-3 2-5 4-5s4 2 4 5c0 1.5-1.5 2-4 2s-4-.5-4-2z" /></>,
+    party: <><path d="M4 20l5-14 9 9z" /><path d="M14 4v2M18 6l-1.5 1.5M20 10h-2" /></>,
+    show: <><path d="M4 5h16v10H4z" /><path d="M9 19h6M12 15v4" /></>,
+    hands: <><path d="M7 11V6a1.5 1.5 0 013 0v5M10 10V5a1.5 1.5 0 013 0v5M13 10V6a1.5 1.5 0 013 0v7c0 4-2.5 6-5.5 6S6 17 6 14v-2" /></>,
+  };
+  return <Svg size={14}>{paths[categoryGroup(c)]}</Svg>;
+}
+
+function categoryGroup(c: string): string {
+  return ["museo", "biblioteca", "scienza", "incontro"].includes(c) ? "culture"
+    : ["natura", "gita", "sport"].includes(c) ? "outdoor"
+    : c === "fattoria" ? "animals"
+    : ["festa", "gusto"].includes(c) ? "party"
+    : c === "laboratorio" ? "hands"
+    : "show";
+}
+
+type Tab = "weekend" | "adulti" | "esplora" | "eventi";
+
+/** App-style tab bar at the bottom, within thumb reach. */
+function BottomNav({ tab, onTab, pending }: { tab: Tab; onTab: (t: Tab) => void; pending: number }) {
+  const items: { k: Tab; l: string; icon: React.ReactNode }[] = [
+    { k: "weekend", l: "Famiglia", icon: <><path d="M3 11l9-7 9 7" /><path d="M5 10v10h14V10" /><path d="M10 20v-5h4v5" /></> },
+    { k: "adulti", l: "Adulti", icon: <><path d="M8 3h8l-1 7a3 3 0 01-6 0z" /><path d="M12 13v7M8 21h8" /></> },
+    { k: "esplora", l: "Esplora", icon: <><circle cx="12" cy="12" r="9" /><path d="M15.5 8.5l-2 5-5 2 2-5z" /></> },
+    { k: "eventi", l: "Eventi", icon: <><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M4 10h16M9 3v4M15 3v4" /></> },
+  ];
+  return (
+    <nav aria-label="Sezioni" className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface/95 backdrop-blur" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+      <div className="mx-auto grid max-w-2xl grid-cols-4">
+        {items.map((it) => {
+          const on = tab === it.k;
+          return (
+            <button
+              key={it.k}
+              aria-current={on ? "page" : undefined}
+              onClick={() => { onTab(it.k); window.scrollTo({ top: 0 }); }}
+              className={`relative flex min-h-14 flex-col items-center justify-center gap-0.5 text-[0.72rem] font-semibold transition-colors duration-150 ${on ? "text-shell" : "text-ink-2 hover:text-ink"}`}
+            >
+              <span className={`flex h-7 w-12 items-center justify-center rounded-full transition-colors duration-150 ${on ? "bg-accent-soft" : ""}`}>
+                <Svg size={20}>{it.icon}</Svg>
+              </span>
+              {it.l}
+              {it.k === "eventi" && pending > 0 && (
+                <span className="num absolute right-[calc(50%-1.6rem)] top-1.5 rounded-full bg-coral px-1.5 text-[0.65rem] leading-4 text-white">{pending}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
 }
 
 const km = (d: number) => `${d.toFixed(1).replace(".", ",")} km`;

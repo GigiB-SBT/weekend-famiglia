@@ -6,6 +6,21 @@ import { loadFavourites, loadHistory, placeKey, recordSearch } from "@/lib/explo
 import { durableSet, localGet } from "@/lib/persist";
 
 const START_KEY = "wf.home.start.v1";
+const AGES_KEY = "wf.home.ages.v1";
+
+/** Children's ages, kept on the phone (null = never set: show the editor). */
+export function loadAges(): number[] | null {
+  try {
+    const raw = localGet(AGES_KEY);
+    const v = raw ? (JSON.parse(raw) as unknown) : null;
+    return Array.isArray(v) && v.every((n) => typeof n === "number") ? (v as number[]) : null;
+  } catch {
+    return null;
+  }
+}
+export function saveAges(ages: number[]) {
+  durableSet(AGES_KEY, JSON.stringify(ages));
+}
 
 /** Saved starting point for the home proposals (null = the chosen zone). */
 export function loadStart(): Place | null {

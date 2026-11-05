@@ -309,7 +309,7 @@ export function EventsPanel({
             <span className="text-ink-2">{updatedLabel ? `aggiornati ${updatedLabel}` : "non ancora letti"}</span>
           </p>
           <button onClick={onSync} disabled={sync === "busy"} className="rounded-full border border-line px-3 py-1.5 text-sm disabled:opacity-50">
-            {sync === "busy" ? "Scarico…" : "Scarica da GitHub"}
+            {sync === "busy" ? "Aggiorno…" : "Aggiorna ora"}
           </button>
           {!importOpen && (
             <button onClick={() => { setImportOpen(true); setImportNote(null); }} className="rounded-full bg-shell px-3 py-1.5 text-sm font-semibold text-on-shell">
