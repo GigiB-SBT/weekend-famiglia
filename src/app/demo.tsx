@@ -39,6 +39,7 @@ import { AdultsPanel } from "./adults-panel";
 import { ExplorePanel } from "./explore-panel";
 import { hydrate } from "@/lib/persist";
 import { fetchRemoteEvents, isNewer } from "@/lib/events/remote";
+import { liveAdults } from "@/lib/events/live-agenda";
 import { CURRENT_BUILD, checkUpdate, isNativeApp, type UpdateInfo } from "@/lib/update";
 
 const ACTIVITIES = seed as Activity[];
@@ -113,6 +114,7 @@ export function Demo() {
   // Automatic updates: weekly events from GitHub (merged only if newer than what the
   // phone has; approved/rejected events are never touched) and the APK version.
   const [update, setUpdate] = useState<UpdateInfo | null>(null);
+  const [live, setLive] = useState<Activity[]>([]);
   const refreshOnline = useCallback(async () => {
     setSync("busy");
     const r = await fetchRemoteEvents();
@@ -121,6 +123,10 @@ export function Demo() {
       saveImported(r.data);
     }
     setSync(r.ok ? "ok" : r.reason);
+    // Adults: live Bologna agenda for the next 15 days (works even without the weekly run).
+    const day = (d: Date) => d.toISOString().slice(0, 10);
+    const now = new Date();
+    setLive(await liveAdults(day(now), day(new Date(now.getTime() + 15 * 86400000))));
     if (await isNativeApp()) setUpdate(await checkUpdate());
   }, []);
 
@@ -201,10 +207,12 @@ export function Demo() {
     const forAll = [...candidates, ...store.events].filter(
       (e) => e.audience === "adulti" || (e.audience === "tutti" && (e.category === "festa" || e.category === "gusto")),
     );
+    // One entry per title and day (the same agenda event can come from GitHub and live).
     const map = new Map<string, Activity>();
-    for (const a of [...adults, ...forAll]) map.set(a.slug, a);
+    const key = (a: Activity) => `${a.title.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()}|${a.event?.date ?? a.slug}`;
+    for (const a of [...live, ...adults, ...forAll]) map.set(key(a), a);
     return [...map.values()];
-  }, [candidates, imported, store]);
+  }, [candidates, imported, store, live]);
   const updatedAt = [CANDIDATES_AT, imported.generatedAt].filter(Boolean).sort().pop() ?? null;
   const pending = useMemo(() => (today ? pendingCandidates(candidates, store, today) : []), [candidates, store, today]);
   // Home proposals: catalogue + approved events + events found online not yet rejected (marked "da verificare").

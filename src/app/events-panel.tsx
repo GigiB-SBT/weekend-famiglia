@@ -135,6 +135,8 @@ export function EventsPanel({
     return haversineKm(a.lat, a.lng, ZONES[zoneSel].lat, ZONES[zoneSel].lng) <= maxKm;
   }
   const pendingShown = pending.filter(inFilter);
+  // Last "Approva tutti", to undo it in one tap.
+  const [undo, setUndo] = useState<{ store: EventStoreData; n: number } | null>(null);
   const hiddenPending = pending.length - pendingShown.length;
 
   const upcoming = store.events
@@ -354,9 +356,27 @@ export function EventsPanel({
         <p className="text-xs text-ink-2">{hiddenPending} eventi da approvare sono fuori da questo filtro: scegli «Tutta l&apos;area» o un raggio più ampio.</p>
       )}
 
+      {undo && (
+        <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-ok/10 px-4 py-3 text-sm">
+          <span>Approvati {undo.n} eventi: ora compaiono tra le proposte.</span>
+          <button onClick={() => { onStore(undo.store); setUndo(null); }} className="rounded-full border border-line bg-surface px-3 py-1.5 font-semibold">Annulla</button>
+        </div>
+      )}
+
       {pendingShown.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-base font-extrabold">Da approvare <span className="num text-coral">· {pendingShown.length}</span></h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-base font-extrabold">Da approvare <span className="num text-coral">· {pendingShown.length}</span></h2>
+            <button
+              onClick={() => {
+                setUndo({ store, n: pendingShown.length });
+                onStore(pendingShown.reduce((acc, c) => upsertEvent(acc, { ...c, status: "published" }), store));
+              }}
+              className="rounded-full bg-shell px-4 py-2 text-sm font-semibold text-on-shell"
+            >
+              {pendingShown.length === 1 ? "Approva" : `Approva tutti (${pendingShown.length})`}
+            </button>
+          </div>
           <p className="text-xs text-ink-2">
             Trovati nelle agende online. Controlla data ed età prima di approvare.
             {hiddenPending > 0 && ` Altri ${hiddenPending} fuori dal filtro.`}
