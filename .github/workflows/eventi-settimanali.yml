@@ -1,13 +1,13 @@
 name: Eventi settimanali
 
-# Every Wednesday morning: reads the public agendas, saves the candidates in the
-# code, opens a GitHub issue "N eventi da approvare" (GitHub emails it to you)
-# The app downloads the new events by itself at the next opening (no APK rebuild).
+# Every morning: reads the public agendas and saves the events in the code (the app
+# downloads them at the next opening). On Wednesdays, and when run by hand, it also
+# opens a GitHub issue "N eventi da approvare" (GitHub emails it to you).
 # Run by hand: Actions → Eventi settimanali → Run workflow.
 
 on:
   schedule:
-    - cron: "17 6 * * 3"
+    - cron: "17 5 * * *"
   workflow_dispatch: {}
 
 permissions:
@@ -38,12 +38,17 @@ jobs:
           if git diff --cached --quiet; then
             echo "Nessuna novità."
           else
-            git commit -q -m "Eventi della settimana"
+            git commit -q -m "Eventi aggiornati"
             git pull -q --rebase origin main
             git push
           fi
 
-      - name: Mail al founder (issue GitHub)
+      - name: Che giorno è
+        id: day
+        run: echo "dow=$(TZ=Europe/Rome date +%u)" >> "$GITHUB_OUTPUT"
+
+      - name: Mail al founder (issue GitHub, il mercoledì)
+        if: github.event_name == 'workflow_dispatch' || steps.day.outputs.dow == '3'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
