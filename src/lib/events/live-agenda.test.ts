@@ -27,7 +27,7 @@ describe("live agenda (adults)", () => {
     }) as unknown as typeof fetch;
     const out = await fetchLiveAdults("2026-11-10", "2026-11-25", f);
     expect(out?.map((a) => a.title)).toEqual(["Spettacolo di danza"]);
-    expect(decodeURIComponent(urls[1].replace(/\+/g, " "))).toContain("data_inizio >= date'2026-10-20'");
+    expect(decodeURIComponent(urls[1].replace(/\+/g, " "))).toContain("data_inizio >= date'2026-11-10'");
   });
   it("returns null when every base fails", async () => {
     expect(await fetchLiveAdults("2026-11-10", "2026-11-25", (async () => { throw new Error("x"); }) as unknown as typeof fetch)).toBeNull();

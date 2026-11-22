@@ -18,8 +18,8 @@ const ZONES = {
   Savena: [44.472, 11.38],
 };
 const WINDOW_DAYS = 16;
-const MAX_CANDIDATES = 80;
-const MAX_ADULTS = 100;
+const MAX_CANDIDATES = 150;
+const MAX_ADULTS = 320;
 
 
 const report = [];
@@ -340,19 +340,50 @@ function tidy(list) {
     });
 }
 
+// Spread the list over the whole window: the Agenda alone has dozens of events a day,
+// so a plain "first N by date" kept only the first 2-3 days. Weekend days get more room,
+// and small sources (venues, parishes, sagre) go before the big Agenda on each day.
+const weekendDay = (d) => [0, 5, 6].includes(new Date(d + "T12:00:00Z").getUTCDay());
+function balance(list, max) {
+  const byDay = new Map();
+  for (const c of list) {
+    const d = c.event.date < from ? from : c.event.date;
+    if (!byDay.has(d)) byDay.set(d, []);
+    byDay.get(d).push(c);
+  }
+  const days = [...byDay.keys()].sort();
+  const weight = (d) => (weekendDay(d) ? 3 : 1);
+  const units = days.reduce((n, d) => n + weight(d), 0) || 1;
+  const big = (c) => /Agenda Cultura/.test(c.event.organizer ?? "");
+  const out = [];
+  const rest = [];
+  for (const d of days) {
+    const quota = Math.max(4, Math.floor((max * weight(d)) / units));
+    const items = byDay.get(d).sort((a, b) => Number(big(a)) - Number(big(b)) || (a.event.startTime ?? "").localeCompare(b.event.startTime ?? ""));
+    out.push(...items.slice(0, quota));
+    rest.push(...items.slice(quota));
+  }
+  // Room left by quiet days goes to the busy ones, weekend first.
+  rest.sort((a, b) => Number(weekendDay(b.event.date)) - Number(weekendDay(a.event.date)) || a.event.date.localeCompare(b.event.date));
+  out.push(...rest.slice(0, Math.max(0, max - out.length)));
+  return out
+    .sort((a, b) => (a.event.date + (a.event.startTime ?? "")).localeCompare(b.event.date + (b.event.startTime ?? "")))
+    .slice(0, max);
+}
+
 const seen = new Set();
-const candidates = tidy(all)
+const candidatesAll = tidy(all)
   .filter((c) => (seen.has(c.slug) ? false : (seen.add(c.slug), true)))
-  .sort((a, b) => (a.event.date + (a.event.startTime ?? "")).localeCompare(b.event.date + (b.event.startTime ?? "")))
-  .slice(0, MAX_CANDIDATES);
+  ;
+const candidates = balance(candidatesAll, MAX_CANDIDATES);
 
 writeFileSync(new URL("../src/data/event-candidates.json", import.meta.url), JSON.stringify(candidates, null, 2) + "\n");
 
 const seenAdults = new Set();
-const adults = tidy(adultsAll)
+const adultsDeduped = tidy(adultsAll)
   .filter((c) => (seenAdults.has(c.slug) ? false : (seenAdults.add(c.slug), true)))
-  .sort((a, b) => (a.event.date + (a.event.startTime ?? "")).localeCompare(b.event.date + (b.event.startTime ?? "")))
-  .slice(0, MAX_ADULTS);
+  ;
+const adults = balance(adultsDeduped, MAX_ADULTS);
 writeFileSync(new URL("../src/data/event-adults.json", import.meta.url), JSON.stringify(adults, null, 2) + "\n");
 log(`- adulti: ${adults.length} eventi (cultura, musica, gusto, feste)`);
 const generatedAt = new Date().toISOString();

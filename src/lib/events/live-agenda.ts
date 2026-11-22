@@ -129,7 +129,7 @@ async function getJson(url: string, fetchImpl: typeof fetch): Promise<{ results?
   return (await res.json()) as { results?: Rec[] };
 }
 
-/** Adult events of the Bologna agenda between two days (yyyy-mm-dd), up to 300 records. */
+/** Adult events of the Bologna agenda between two days (yyyy-mm-dd), up to 500 records. */
 export async function fetchLiveAdults(from: string, to: string, fetchImpl: typeof fetch = fetch): Promise<Activity[] | null> {
   for (const base of BASES) {
     const api = `${base}/api/explore/v2.1/catalog/datasets/${DATASET}/records`;
@@ -140,10 +140,11 @@ export async function fetchLiveAdults(from: string, to: string, fetchImpl: typeo
       if (!startKey) return [];
       const out: Activity[] = [];
       const seen = new Set<string>();
-      // Events that started up to 21 days before the window can still be running.
-      const since = new Date(Date.parse(from) - 21 * 86400000).toISOString().slice(0, 10);
+      // Only events starting in the window: starting earlier filled the pages with
+      // finished events and pushed the coming days out of the 500-record limit.
+      const since = from;
       const readPages = async (params: Record<string, string>) => {
-        for (let offset = 0; offset < 300; offset += 100) {
+        for (let offset = 0; offset < 500; offset += 100) {
           const q = new URLSearchParams({ ...params, limit: "100", offset: String(offset) });
           const rows = (await getJson(`${api}?${q}`, fetchImpl)).results ?? [];
           for (const r of rows) {
