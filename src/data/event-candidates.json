@@ -66,39 +66,6 @@
     }
   },
   {
-    "slug": "loc-2026-11-14-sagr-it-ascoli-castagnata-dell-x27-associazione-san-martino-",
-    "title": "Castagnata dell'associazione - San Martino",
-    "category": "festa",
-    "audience": "tutti",
-    "description": "Castagnata dell&#x27;associazione - San Martino calendar_today 14 November 2026 location_on Montecassiano",
-    "minAge": 0,
-    "maxAge": 17,
-    "multiAgeNote": "",
-    "setting": "mixed",
-    "weatherFit": "any",
-    "costBand": "free",
-    "priceNote": "costo da verificare",
-    "durationMin": null,
-    "bookingRequired": null,
-    "address": "Ripatransone",
-    "zone": "Ripatransone",
-    "lat": 42.999,
-    "lng": 13.762,
-    "openingNote": "",
-    "sourceUrl": "https://sagr.it/en/marche/ascoli-and-sibillini/november-2026",
-    "status": "da_verificare",
-    "isDemo": false,
-    "event": {
-      "date": "2026-11-14",
-      "endDate": "2026-12-08",
-      "startTime": null,
-      "endTime": null,
-      "organizer": "Sagre · Ascoli e Sibillini (sagr.it) · novembre",
-      "origin": "agenda",
-      "approxPosition": true
-    }
-  },
-  {
     "slug": "loc-2026-11-21-appennino-bolognese-varie-mercatini-di-natale-a-riola-13-dic",
     "title": "Varie Mercatini di Natale a Riola 13 Dicembre 2026 Vergato Natale",
     "category": "festa",
@@ -363,11 +330,11 @@
     }
   },
   {
-    "slug": "loc-2026-11-28-sagramap-ascoli-sagre-ad-ascoli-piceno-questo-weekend-28-29-",
-    "title": "Sagre ad Ascoli Piceno questo weekend, 28-29 novembre 2026",
+    "slug": "loc-2026-11-28-sagramap-ascoli-sagre-ad-ascoli-piceno-oggi-e-questo-weekend",
+    "title": "Sagre ad Ascoli Piceno oggi e questo weekend, 28-29 novembre",
     "category": "festa",
     "audience": "tutti",
-    "description": "Sagre ad Ascoli Piceno questo weekend, 28-29 novembre 2026",
+    "description": "Sagre ad Ascoli Piceno oggi e questo weekend, 28-29 novembre",
     "minAge": 0,
     "maxAge": 17,
     "multiAgeNote": "",
@@ -822,6 +789,39 @@
       "organizer": "Agenda Cultura · Comune di Bologna",
       "origin": "agenda",
       "approxPosition": false
+    }
+  },
+  {
+    "slug": "loc-2026-12-13-appennino-bolognese-varie-mercatino-di-natale-a-bargi-13-dic",
+    "title": "Varie Mercatino di Natale a Bargi 13 Dicembre 2026 Camugnano Natale",
+    "category": "festa",
+    "audience": "tutti",
+    "description": "Varie Mercatino di Natale a Bargi 13 Dicembre 2026 Camugnano Natale",
+    "minAge": 0,
+    "maxAge": 17,
+    "multiAgeNote": "",
+    "setting": "mixed",
+    "weatherFit": "any",
+    "costBand": "free",
+    "priceNote": "costo da verificare",
+    "durationMin": null,
+    "bookingRequired": null,
+    "address": "Camugnano",
+    "zone": "Camugnano",
+    "lat": 44.183,
+    "lng": 11.088,
+    "openingNote": "",
+    "sourceUrl": "https://appenninobolognese.cittametropolitana.bo.it/it/eventi-all",
+    "status": "da_verificare",
+    "isDemo": false,
+    "event": {
+      "date": "2026-12-13",
+      "endDate": null,
+      "startTime": null,
+      "endTime": null,
+      "organizer": "Appennino Bolognese · Città metropolitana",
+      "origin": "agenda",
+      "approxPosition": true
     }
   }
 ]
